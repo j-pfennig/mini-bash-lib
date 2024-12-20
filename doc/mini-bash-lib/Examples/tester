@@ -1,0 +1,58 @@
+#!/usr/bin/bash
+CEN_LEGAL="Copyright Dr. J. Pfennig (c) 2007-2024; BSD License"
+CEN_TITLE="Tool to experiment with mini-bash-lib and centauri-bash-lib"
+
+# --- load the shared library via proxy:
+
+# Options:  -f  enable --force cmd line option
+#           -t  enable internationalization
+#           -n  do never use centauri-bah-lib
+#           -y  enable --yes/--no cmd line options
+           
+PATH+=":${0%/*}" . _mini_bash_lib -f -y - '0.01' || exit 2
+
+# --- this is the payload:
+run() {
+    local data
+    eval "$*"
+    message -m "Status: $?" "${data[@]@Q}"
+}
+
+# --- implement --help:
+usage() {
+    create -c <<!EOF
+Usage:     $CEN_NAME [--mini=0|1] [-d|-f|-h] [-q|-v] [-n|-y] [---] <text>...
+
+           $CEN_TITLE.
+
+Options:   -d --dryrun          show what would be done, make no changes
+           -f --force           override prudent default behaviours
+           -h --help            show this text
+           -n --no              do not prompt for confirmation, assume 'no'
+           -q --quiet           report errors only
+           -v --verbose         be verbose
+           -y --yes             do not prompt for confirmation, assume 'yes'
+
+           --mini=0             use centauri-bash-lib if it is installed
+           --mini=1             disable centauri-bash-lib
+
+Arguments: <text>...            List of words passed to the bash-builtin 'eval'
+
+Remarks:   The variable 'data' is declared before 'eval' and dumped after it.
+
+           In 'centauri-bash-lib' the more comfortable 'centaurilauncher lib'
+           command opens an interactive shell that loads 'centauri-bash-lib'
+           for experimenting.
+
+Examples:  $CEN_NAME --- system -s data -- hostname -i
+
+           $CEN_NAME --- 'system -s data -- date --iso-8601 \\
+                       message "Today is:" "$data"; quit'
+
+!EOF
+}
+
+# --- invokation via app framework
+main "$@" ; quit 
+
+# end

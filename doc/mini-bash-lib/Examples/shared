@@ -1,0 +1,55 @@
+#!/usr/bin/bash
+CEN_LEGAL="Copyright <anonymous> (c) 2024; <unknown> License"
+CEN_TITLE="A 'hello world' using mini-bash-lib via proxy"
+
+# use proxy to load mini-bash-lib or centauri-bash-lib (if installed)
+
+# Options:  -f  enable --force cmd line option
+#           -t  enable internationalization
+#           -n  do never use centauri-bah-lib
+#           -y  enable --yes/--no cmd line options
+           
+PATH+=":${0%/*}" . _mini_bash_lib - '0.01' || exit 2
+
+# declare global variables ...
+
+#CEN_OPT_EXTRA=                  # see --extra
+
+# ------------------------------------------------------------------------------
+# Payload
+# ------------------------------------------------------------------------------
+run() {
+    [ $# = 0 ] && set -- "Hello World!"
+    message -- "$@"
+}
+
+#options() {
+#    case "$1" in
+#        -X|--extra)     optarg extra -     -f ;;
+#    esac
+#}
+
+#usage() {
+#    create -c <<!EOF
+#Usage:     $CEN_NAME [-d|-h] [-v|-q] [---] <arg>...
+#
+#           $CEN_TITLE.
+#
+#Options:   -d --dryrun          show what would be done, make no changes
+#           -h --help            show this text
+#           -q --quiet           report errors only
+#           -v --verbose         be verbose
+#
+#           -X --extra           demo option
+#
+#Arguments: <arg>                Echoed to output
+#
+#!EOF
+#}
+
+# ------------------------------------------------------------------------------
+# Call run() after option parsing
+# ------------------------------------------------------------------------------
+main "$@" ; quit
+
+# End

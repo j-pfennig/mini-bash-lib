@@ -1,0 +1,241 @@
+#!/usr/bin/bash
+CEN_LEGAL="Copyright Dr. J. Pfennig (c) 2007-2024; BSD License"
+CEN_TITLE="Tool that strips comments and extra spaces or quotes"
+
+# use proxy to load mini-bash-lib or centauri-bash-lib (if installed)
+PATH="../../../src/mini-bash-lib:$PATH" . _mini_bash_lib - '0.01' || exit 2
+
+# declare global variables ...
+
+CEN_OPT_EMPTY=          # see --empty
+CEN_OPT_NUMBER=         # see --number
+CEN_OPT_OUTPUT=         # see --output
+CEN_OPT_TRIM=           # see --trim
+CEN_OPT_UGLIFY=         # see --uglify
+CEN_OPT_WORLD=          # see --world
+
+DAT_FOUT=               # output file path
+
+# ------------------------------------------------------------------------------
+# Payload
+# ------------------------------------------------------------------------------
+run() {
+    # need one argument - show usage info and quit
+    [ $# = 1 ] || { usage ; quit -s 1 ; }
+
+    # load data from input file
+    local data fout file="$1"
+
+    if [ "$file" = '.' ] ; then         # use library source
+        [ "$CEN_FEATURE_N" = 1 ] || quit "Try again using option '--mini=1'"
+        file="${CEN_CMDDATA%.p}"        # see proxy code
+    fi
+
+    [ -f "$file" -a -r "$file" ] || quit -e "Not a readable file:" "$file"
+    system -r -f -- eval "readarray -t data <\"$file\""
+
+    # truncate output file
+    if [ -n "$CEN_OPT_OUTPUT" ] ; then
+        message -p "Read %s lines from '%s'" "${#data[@]}" "$file"
+        fout="$CEN_OPT_OUTPUT"
+        [ "$fout" = '.' ] && fout="${file}.p"
+        [ "$fout" -ef "$file" ] && quit -e "Refusing to override input file"
+        create -t -- "$fout"
+        CEN_HOOK_QUIT='cleanup'         # quit hook to delete bad output
+        DAT_FOUT="$fout"                # used in hook function
+    fi
+
+
+    local item itrm tail here line=0 outp=()
+
+    # loop over input lines
+    for item in "${data[@]}" ; do
+        if [ "$line" = 0 ] ; then
+            itrm="$item"
+        elif [ "${item::1}" = '#' ] ; then
+            item= ; itrm=
+        else
+            itrm="${item#"${item%%[![:space:]]*}"}"
+            if [ "${itrm::1}" = '#' ] ; then
+               item= ; itrm=
+            fi
+        fi
+        ((line += 1))
+
+        [ -z "$itrm" -a -z "$here" -a -n "$CEN_OPT_EMPTY" ] && continue
+
+        # trim also removes some inline comments
+        if [ -n "$CEN_OPT_TRIM" ] ; then
+            item="${itrm% #*}"
+            if [ "$itrm" != "$item" ] ; then
+                tail="${itrm:${#item}}"
+                # tail must not be quoted
+                [ "${tail/[\"\'\\]/}" = "$tail" ] && itrm="$item"
+            fi
+            item="$itrm"
+        fi
+
+        # remove trailing spaces
+        item="${item%"${item##*[![:space:]]}"}"
+
+        # suspend trimming in a '!EOF' here document
+        if [ -n "$here" ] ; then
+            [ "$item" = '!EOF' ] && { here= ; CEN_OPT_TRIM=1 ; }
+        elif [ -z "$CEN_OPT_TRIM" ] ; then
+            :
+        elif [ "${item/\<\<!EOF/}" != "$item" ] ; then
+            CEN_OPT_TRIM= ; here=1
+        fi
+
+        # uglify
+        if [ -n "$CEN_OPT_TRIM" -a -n "$CEN_OPT_UGLIFY" ] ; then
+            # remove extra spaces
+            item="${item// && /\&\&}" ; item="${item// || /||}"
+            item="${item//   / }" ; item="${item//  / }" ; item="${item//  / }"
+            item="${item// ; /;}" ; item="${item/ ;;/;;}"
+            # function declarations
+            item="${item/() \{/()\{}"
+            # some case statements
+           # [ "${item::1}" = '-' ] && item="${item/) /)}"
+            case "$item" in
+                -*\)\ *) item="${item/) /)}" ;;
+                \*\)\ *) item="${item/) /)}" ;;
+                [0-9]\)\ *) item="${item/) /)}" ;;
+            esac
+            # remove some quotes
+            item="${item/ \'-\' / - }"
+        fi
+
+        # line numbering
+        [ -n "$CEN_OPT_NUMBER" ] && printf -v item '%4s: %s' "$line" "$item"
+        outp+=("$item")
+
+        # hello world
+        [ -n "$CEN_OPT_WORLD" -a "$line" = 1 ] && outp+=(
+        'CEN_LEGAL="Copyright <anonymous> (c) 2024; <unknown> License"'
+        'CEN_TITLE="A hello world using mini-bash-lib"'
+        ''
+        '# declare global variables ...'
+        ''
+        '#CEN_OPT_EXTRA=                  # see --extra'
+        ''
+        '#CEN_FEATURE_F=1                 # enable --force option'
+        ''
+        '# ------------------------------------------------------------------------------'
+        '# Payload'
+        '# ------------------------------------------------------------------------------'
+        'run() {'
+        '    [ $# = 0 ] && set -- "Hello World!"'
+        '    message -- "$@"'
+        '}'
+        ''
+        '#options() {'
+        '#    case "$1" in'
+        '#        -X|--extra)     optarg 'extra' -     -f ;;'
+        '#    esac'
+        '#}'
+        ''
+        '#usage() {'
+        '#    create -c <<!EOF'
+        '#Usage:     $CEN_NAME [-d|-h] [-v|-q] [---] <arg>...'
+        '#'
+        '#           $CEN_TITLE.'
+        '#'
+        '#Options:   -d --dryrun          show what would be done, make no changes'
+        '#           -h --help            show this text'
+        '#           -q --quiet           report errors only'
+        '#           -v --verbose         be verbose'
+        '#'
+        '#           -X --extra           demo option'
+        '#'
+        '#Arguments: <arg>                Echoed to output'
+        '#'
+        '#!EOF'
+        '#}'
+        ''
+        '# ------------------------------------------------------------------------------'
+        '# Packed mini-bash-lib'
+        '# ------------------------------------------------------------------------------'
+        )
+    done
+
+    # hello world main/quit and file output
+    [ -n "$CEN_OPT_WORLD" ] && outp+=('main "$@";quit' '# End')
+
+    create -t -v outp "${fout:-/dev/stdout}"
+    if [ -n "$fout" ] ; then
+        [ -x "$file" ] && system -f -- chmod 775 "$fout"
+        message -a -p "Wrote %s lines into '%s'" "${#outp[@]}" "$fout"
+    fi
+}
+
+# ------------------------------------------------------------------------------
+# Hook function for quit to remove bad output after error
+# ------------------------------------------------------------------------------
+cleanup() {
+    if error -t ; then
+        trace "No error, keep output"
+    elif [ -x "$DAT_FOUT" ] ; then
+        trace "Remove output after error:" "$DAT_FOUT"
+        remove -- $DAT_FOUT
+    fi
+}
+
+# ------------------------------------------------------------------------------
+# Custom options
+# ------------------------------------------------------------------------------
+options() {
+    case "$1" in
+        # end of option parsing
+        '') [ -n "$CEN_OPT_WORLD" ] && { CEN_OPT_UGLIFY=1 ; CEN_OPT_EMPTY=1 ; }
+            [ -n "$CEN_OPT_UGLIFY" ] && CEN_OPT_TRIM=1 ;;
+
+        -E|--emp*) optarg  'empty'   -   -f ;;      # flag
+        -N|--num*) optarg  'number'  -   -f ;;      # flag
+        -O|--out*) optarg  'output'  -   -t ;;      # text option
+        -T|--tri*) optarg  'trim'    -   -f ;;      # flag
+        -U|--ugl*) optarg  'uglify'  -   -f ;;      # flag
+        -W|--wor*) optarg  'world'   -   -f ;;      # flag
+    esac
+}
+
+# ------------------------------------------------------------------------------
+# Usage info
+# ------------------------------------------------------------------------------
+usage() {
+    create -c <<!EOF
+Usage:     $CEN_NAME [-d|-h] [-q|-v] [-E] [-N] [-O <fout>] [-T|-U] [---] <finp>|.
+
+           $CEN_TITLE.
+
+Options:   -d --dryrun          show what would be done, make no changes
+           -h --help            show this text
+           -q --quiet           report errors only
+           -v --verbose         be verbose
+
+           -E --empty           skip empty output lines
+           -N --number          output line numbers
+           -O --output <fout>   specity an output file
+           -T --trim            remove leading spaces and some inline comments
+           -U --uglify          enable --trim and remove extra spaces or quotes
+           -W --world           embed <finp> in a 'Hello World' script
+
+Arguments: <finp>               input script (use '.' for mini-bash-lib source)
+           <fout>               output file (use '.' to append '.p' to <finp>)
+
+Remarks:   Use '$CEN_NAME -W -O <file> .' to create a script template based on
+           a packed inline version of 'mini-bash-lib'.
+
+           In 'centauri-bash-lib' there is a tool named 'uglify' for similar
+           purposes. While '$CEN_NAME' is very stupid and barely understands
+           more of Bash scripting thant needed, 'uglify' is somewhat smarter.
+
+!EOF
+}
+
+# ------------------------------------------------------------------------------
+# Pass control to app framework
+# ------------------------------------------------------------------------------
+main "$@" ; quit
+
+# End
