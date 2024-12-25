@@ -1,0 +1,83 @@
+msgid ""
+msgstr "Content-Type: text/plain; charset=UTF-8\n"
+
+#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini-bash-lib:516
+msgid "***ERROR***"
+msgstr "***FEHLER***"
+
+#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini-bash-lib:517
+msgid "***FATAL ERROR***"
+msgstr "***FATALER FEHLER***"
+
+#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini-bash-lib:524
+msgid "***WARNING***"
+msgstr "***WARNUNG***"
+
+#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini-bash-lib:577
+msgid "yes°no° [Y/n]? ° [y/N]? "
+msgstr "ja°nein° [J/n]? ° [j/N]? "
+
+#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini-bash-lib:593
+msgid "Please enter 'yes' or 'no'"
+msgstr "Bitte 'ja' oder 'nein' eingeben"
+
+#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini-bash-lib:618
+msgid "Existing file:"
+msgstr "Datei existiert:"
+
+#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini-bash-lib:634
+msgid "Failed to create file:"
+msgstr "Dateierstellung fehlgeschlagen:"
+
+#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini-bash-lib:648
+msgid "Execute"
+msgstr "Ausführen"
+
+#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini-bash-lib:650
+msgid "Skip"
+msgstr "Auslassen"
+
+#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini-bash-lib:687
+msgid "Is not a folder:"
+msgstr "Ist kein Verzeichnis:"
+
+#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini-bash-lib:693
+msgid "Current folder"
+msgstr "Aktuelles Verz."
+
+#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini-bash-lib:775
+#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini-bash-lib:908
+msgid "Command not found:"
+msgstr "Kommando nicht gefunden:"
+
+#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini-bash-lib:796
+msgid "Execution of '%s' failed (status %s)"
+msgstr "Ausführen von '%s' fehlgeschlagen (Status %s)"
+
+#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini-bash-lib:815
+msgid "Temporary file"
+msgstr "Temporäre Datei"
+
+#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini-bash-lib:843
+msgid "Option '--help' is not implemented"
+msgstr "Option '--help' ist nicht implementiert"
+
+#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini-bash-lib:850
+msgid "<unknown Author/Licence>"
+msgstr "<unbekannter Autor/Lizenz>"
+
+#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini-bash-lib:855
+msgid "Unknown option:"
+msgstr "Unbekannte Option:"
+
+#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini-bash-lib:886
+msgid "Terminated after error"
+msgstr "Nach Fehler beendet"
+
+#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini-bash-lib:887
+msgid "Terminated"
+msgstr "Beendet"
+
+#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini-bash-lib:908
+msgid "***ABORT***"
+msgstr "***ABBRUCH***"
