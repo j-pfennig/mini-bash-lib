@@ -1,0 +1,79 @@
+#!/usr/bin/bash
+CEN_LEGAL="Copyright Dr. J. Pfennig (c) 2007-2024; BSD License"
+CEN_TITLE="Example to demonstrate option handling"
+
+# use proxy to load mini-bash-lib or centauri-bash-lib (if installed)
+PATH="../../../src/mini-bash-lib:$PATH" . _mini_bash_lib -t - '0.01' || exit 2
+
+# declare global variables ...
+
+CEN_OPT_ADDR=       # see --address
+CEN_OPT_ECHO=       # see --echo
+CEN_OPT_USER=       # see --user
+
+# ------------------------------------------------------------------------------
+# Payload
+# ------------------------------------------------------------------------------
+run() {
+    # no arguments please - show usage info and quit
+    [ $# = 0 ] || { usage ; quit -s 1 ; }
+
+    [ -z "$CEN_OPT_ADDR$CEN_OPT_ECHO$CEN_OPT_USER" ] && 
+        quit $"No -A/-E/-U option specified"
+
+    local text
+    if [ -n "$CEN_OPT_ADDR" ] ; then
+        system -f -s text -- hostname -i
+        message -a "Addr =" "$text"
+    fi
+
+    [ -n "$CEN_OPT_ECHO" ] && message -a "Echo =" "$CEN_OPT_ECHO"
+
+    if [ -n "$CEN_OPT_USER" ] ; then
+       # system -f -s text -- id "$CEN_OPT_USER"
+       # [ "${#text}" -gt 64 ] && text="${text::60} ..."
+       text="$CEN_OPT_USER"
+        message -a "User =" "$text"
+    fi
+}
+
+# ------------------------------------------------------------------------------
+# Custom options
+# ------------------------------------------------------------------------------
+options() {
+    trace -c 'Options' "'$1' '$2'  CEN_ARGOPT=$CEN_ARGOPT  CEN_ACTARR=$CEN_ACTARR" 
+    case "$1" in
+    -A|--addr*) optarg  'addr'  -   -f ;;           # flag option
+    -E|--echo)  optarg  'echo'  -   -t ;;           # text option
+    -U|--user)  optarg  'user'  -   -t "$USER" ;;   # text option with default
+    esac
+}
+
+# ------------------------------------------------------------------------------
+# Usage info
+# ------------------------------------------------------------------------------
+usage() {
+    create -c <<!EOF
+Usage:     $CEN_NAME [-d|-h] [-q|-v] [-A] [-E <text>] [-U <name>] [---]
+
+           $CEN_TITLE.
+
+Options:   -d --dryrun          show what would be done, make no changes
+           -h --help            show this text
+           -q --quiet           report errors only
+           -v --verbose         be verbose (use twice for debug)
+
+           -A --address         show IP info
+           -U --user   <name>   show user info, current user for '-'
+
+Arguments: -none-               no arguments expected
+
+!EOF
+}
+
+# ------------------------------------------------------------------------------
+# Pass control to app framework
+# ------------------------------------------------------------------------------
+main "$@" ; quit 
+
+# End

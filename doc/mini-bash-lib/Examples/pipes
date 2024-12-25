@@ -1,0 +1,60 @@
+#!/usr/bin/bash
+CEN_LEGAL="Copyright Dr. J. Pfennig (c) 2007-2024; BSD License"
+CEN_TITLE="Demonstrating I/O redirection and pipes with system()"
+
+# --- load the shared library via proxy:
+PATH+=":${0%/*}" . _mini_bash_lib - '0.01' || exit 2
+
+# --- this is the payload:
+run() {
+    local rslt              # used to capture tool output
+    local eopt              # used to inject errors
+
+    # Check for required external tools
+
+    system -c -f -- ls sort md5sum
+
+    # Recommended: use 'eval' to implement I/O redirection 
+
+    system -f -p -s rslt -- eval "md5sum </etc/fstab"
+    [ $? = 0 ] && message -a "Md5:" "${rslt%% *}"
+
+    # Recommended: use 'set -o pipfail' and 'eval' to implement pipes
+
+    # eopt='--nonsense'     # uncomment to inject an error
+
+    system -e -p -s rslt -- eval "set -o pipefail ; ls -lR | sort $eopt | md5sum"
+    [ $? = 0 ] && message -a "Got:" "${rslt%% *}"
+
+    # Recommended: terminate after errors vs. --dryrun
+    
+    # system -q -- true || quit         # this works not as expected with --dryrun
+                                        # because system would return 'status 1'
+    error -q                            # this only quits after error, --dryrun safe 
+
+    # Another way is to use Bash 'here documents'. Option -t cause 'system'
+    # to do nothing after a previous error ...
+
+    # eopt='--nonsense'     # uncomment to inject an error
+    system -e -p -s rslt     -- ls -lR $eopt
+    system -e -p -s rslt -t  -- sort   <<<"$rslt"
+    system -e -p -s rslt -t  -- md5sum <<<"$rslt"
+    [ $? = 0 ] && message -a "Got:" "${rslt%% *}"
+    error -q - "Line $LINENO" 
+
+    # And finally, tempory files are a choice. Mind to use 'eval' for redirections!
+
+    local tmp1 tmp2
+    tmpfile -s tmp1 ; tmpfile -s tmp2
+      eopt='--nonsense'     # uncomment to inject an error
+    system -e -p             -- eval "ls -lR $eopt >$tmp1"
+    system -e -p -t          -- eval "sort   <$tmp1 >$tmp2"
+    system -e -p -s rslt -t  -- eval "md5sum <$tmp2"
+    [ $? = 0 ] && message -a "Got:" "${rslt%% *}"
+    error -q - "Line $LINENO" 
+}
+
+# --- invokation via app framework:
+main "$@" ; quit 
+
+# end

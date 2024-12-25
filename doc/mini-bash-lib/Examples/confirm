@@ -1,0 +1,42 @@
+#!/usr/bin/bash
+
+PATH="../../../src/mini-bash-lib:$PATH" . _mini_bash_lib -t 
+
+repl='<not set>'
+
+show_result() {
+    message -i -p "Status %s  Text '%s'" "$1" "$2"
+    repl='<not set>'
+}
+
+run() {
+    CEN_YESNO=     ; message "yes/no with 'CEN_YESNO=$CEN_YESNO'"
+
+    confirm -a    -s repl "Hallo" ; show_result $? "$repl"
+    confirm -a -n -s repl "Hallo" ; show_result $? "$repl"
+    confirm -a -y -s repl "Hallo" ; show_result $? "$repl"
+
+    confirm -d 'Hello' -p - -s repl  "Enter some text" ; temp="$repl" ; show_result $? "$repl"
+    confirm -p " [$temp]: " -u -s repl  "Try again in upper case" ; show_result $? "$repl"
+
+    CEN_YESNO='y'  ; message "yes/no with 'CEN_YESNO=$CEN_YESNO'"
+
+    confirm -a    -s repl "Hallo" ; show_result $? "$repl"
+    confirm -a -n -s repl "Hallo" ; show_result $? "$repl"
+    confirm -a -y -s repl "Hallo" ; show_result $? "$repl"
+    confirm -d 'Hello' -p - -s repl  "Enter some text" ; temp="$repl" ; show_result $? "$repl"
+
+    CEN_YESNO='n'  ; message "yes/no with 'CEN_YESNO=$CEN_YESNO'"
+
+    confirm -a    -s repl "Hallo" ; show_result $? "$repl"
+    confirm -a -n -s repl "Hallo" ; show_result $? "$repl"
+    confirm -a -y -s repl "Hallo" ; show_result $? "$repl"
+    quit Done
+}
+
+# enp1s0u1u2  ->  eth1   stat  usb1
+# tether vesucht nur eth1
+# warum ifup --force enp... ohne /dev
+
+main "$@" ; quit 
+
