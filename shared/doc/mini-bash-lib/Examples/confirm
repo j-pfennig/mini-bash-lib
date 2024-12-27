@@ -1,6 +1,6 @@
 #!/usr/bin/bash
 
-PATH="../../../src/mini-bash-lib:$PATH" . _mini_bash_lib -t 
+PATH+=":${0%/*}" . _mini_bash_lib - '0.01' || exit 2
 
 repl='<not set>'
 
@@ -33,10 +33,6 @@ run() {
     confirm -a -y -s repl "Hallo" ; show_result $? "$repl"
     quit Done
 }
-
-# enp1s0u1u2  ->  eth1   stat  usb1
-# tether vesucht nur eth1
-# warum ifup --force enp... ohne /dev
 
 main "$@" ; quit 
 

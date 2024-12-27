@@ -1,0 +1,47 @@
+msgid ""
+msgstr "Content-Type: text/plain; charset=UTF-8"
+
+#: /home/local/soho/mini-bash-lib/locale/mini10:19
+#: /home/local/soho/mini-bash-lib/locale/mini10:62
+msgid "Nothing to update"
+msgstr "Nichts zu tun"
+
+#: /home/local/soho/mini-bash-lib/locale/mini10:31
+msgid "Initial translations"
+msgstr "Erste Übersetzungen"
+
+#: /home/local/soho/mini-bash-lib/locale/mini10:34
+msgid "No translations found:"
+msgstr "Keine Übersetzungen gefunden:"
+
+#: /home/local/soho/mini-bash-lib/locale/mini10:40
+msgid "Update translations"
+msgstr "Übersetzungen aktualisieren"
+
+#: /home/local/soho/mini-bash-lib/locale/mini10:45
+msgid "File without translations:"
+msgstr "Datei ohne Übersetzungen:"
+
+#: /home/local/soho/mini-bash-lib/locale/mini10:65
+msgid "Create catalogue"
+msgstr "Katalog erstallen"
+
+#: /home/local/soho/mini-bash-lib/locale/mini10:77
+msgid "Existing language folder:"
+msgstr "Sprachverzeichnis schon vorhanden"
+
+#: /home/local/soho/mini-bash-lib/locale/mini10:78
+msgid "Create language folder '%s'"
+msgstr "Sprachverzeichnus '%s' erstellen"
+
+#: /home/local/soho/mini-bash-lib/locale/mini10:97
+msgid "No language folder found, try option '--base'"
+msgstr "Kein Sprachverzeichnis gefunden, Option '--base' versuchen"
+
+#: /home/local/soho/mini-bash-lib/locale/mini10:104
+msgid "Source script not found:"
+msgstr "Quellen-Skript nicht gefunden:"
+
+#: /home/local/soho/mini-bash-lib/locale/mini10:115
+msgid "1st argument must be one of:"
+msgstr "1. Argument muss eines von diesen sein:"

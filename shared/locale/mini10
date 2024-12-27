@@ -1,0 +1,202 @@
+#!/usr/bin/bash
+CEN_LEGAL="Copyright Dr. J. Pfennig (c) 2007-2024; BSD License"
+CEN_TITLE="Tool to generate gnu gettxt-tools internationalization"
+
+# use proxy to load mini-bash-lib or centauri-bash-lib (if installed)
+PATH="${0%/*}/../../src/mini-bash-lib:$PATH" . _mini_bash_lib -t - '0.01' || exit 2
+
+# declare global variables ...
+
+CEN_OPT_BASE=           # see --base
+
+# ------------------------------------------------------------------------------
+# create .po file: <fldr> <name>
+# ------------------------------------------------------------------------------
+run_dump() {
+    local name="${2##*/}"
+    local fipo="${1%/*}/$name.po"
+    if ! [ "$2" -nt "$fipo" ] ; then
+        trace -a -c $"Nothing to update" "$fipo" ; return
+    fi
+    local umsg=('msgid ""' 'msgstr "Content-Type: text/plain; charset=UTF-8"')
+    while : ; do
+        # create temporary string file
+        if ! dryrun "bash --dump-po-strings $2 >> ${fipo}t" ; then
+            create -s -t -v umsg "${fipo}t" || break
+            system -e -p -z -- bash --dump-po-strings "$2" >> "${fipo}t" || break
+        fi
+
+        # create a new 'po' file
+        if [ ! -s "$fipo" ] ; then
+            message -a -c $"Initial translations" "$fipo"
+            if system -e -p -- msguniq --to-code=utf-8 --output-file "$fipo" "${fipo}t" ; then
+                if [ ! -s "$fipo" ] ; then
+                    warning -a $"No translations found:" "$fipo" ; remove -s "$fipo" ; break
+                fi
+            fi
+
+        # update existing 'po' file
+        else
+            message -a -c $"Update translations" "$fipo"
+            system -e -p -t -- msguniq --to-code=utf-8 --output-file "${fipo}u" "${fipo}t"
+            if [ -s "${fipo}u" ] ; then
+                system -e -p -t -- msgmerge --update "$fipo" "${fipo}u"
+            else
+                warning -a $"File without translations:" "$fipo"
+            fi
+            remove "${fipo}u"
+        fi
+        break
+    done
+    remove -s -- "${fipo}t"
+}
+
+# ------------------------------------------------------------------------------
+# create .mo file: <fldr> <name>
+# ------------------------------------------------------------------------------
+run_build() {
+    local name="${2##*/}"
+    local fipo="${1%/*}/$name.po"
+    local fimo="$1/$name.mo"
+    if ! [ "$fipo" -nt "$fimo" ] ; then
+        trace -a -c $"Nothing to update" "$fimo" ; return
+    fi
+
+    message -a -c $"Create catalogue" "$fimo"
+    if ! dryrun "msgfmt -o '$fimo' '$fipo'" ; then
+        system -e -p -- msgfmt -o "$fimo" "$fipo"
+    fi
+}
+
+# ------------------------------------------------------------------------------
+# create language folder
+# ------------------------------------------------------------------------------
+run_lang() {
+    local ldir="$1/LC_MESSAGES"
+    if [ -d "$ldir" ] ; then
+        warning $"Existing language folder:" "$ldir"
+    elif confirm -y -f $"Create language folder '%s'" "$ldir" ; then
+        folder -m -f -- "$ldir"
+    fi
+}
+
+# ------------------------------------------------------------------------------
+# Payload
+# ------------------------------------------------------------------------------
+run() {
+    # need two arguments - show usage info and quit
+    [ $# = 2 ] || { usage ; quit -s 1 ; }
+
+    # check script path
+    local bsrc
+    for bsrc in "$2" "../src/local/$2" "../src/mini-bash-lib/$2" \
+                     "../doc/mini-bash-lib/*" '' ; do
+        [ -z "$bsrc" ] &&
+            quit -e $"Source script not found:" "$2"
+        [ -x "$bsrc" ] && break
+    done
+
+    # get language folders
+    folder -c -f -- "${CEN_OPT_BASE:-${0%/*}}"
+    if [ "${1::3}" = 'lan' ] ; then
+        run_lang "$2" ; quit
+    fi
+    local lang dirs=(??/LC_MESSAGES)
+    [ "${dirs::2}" = '??' ] &&
+        quit -e $"No language folder found, try option '--base'"
+
+    # check text-tools
+    system -c -f msgfmt msguniq msgmerge
+
+    # loop over languge folders ...
+    for lang in "${dirs[@]}" ; do
+        case "$1" in
+        bui*)   run_build "$lang" "$bsrc" ;;
+        dum*)   run_dump "$lang" "$bsrc" ;;
+        *)      quit -e $"1st argument must be one of:" 'lang|dump|build'
+        esac
+        error -q
+    done
+}
+
+# ------------------------------------------------------------------------------
+# Custom options
+# ------------------------------------------------------------------------------
+options() {
+    case "$1" in
+        -B|--bas*) optarg  'base'       -   -t ;;      # text
+    esac
+}
+
+# ------------------------------------------------------------------------------
+# Usage info
+# ------------------------------------------------------------------------------
+usage() {
+    create -c <<!EOF
+Usage:     $CEN_NAME [-d|-h] [-q|-v] -B <base> [--] <what> <arg>
+
+           $CEN_TITLE.
+
+           (1) $CEN_NAME <opt>... lang  <lang>          # new language
+           (2) $CEN_NAME <opt>... dump  <script>        # update po files
+           (3) $CEN_NAME <opt>... build <script>        # build mo files
+
+Options:   -d --dryrun          show what would be done, make no changes
+           -h --help            show this text
+           -q --quiet           report errors only
+           -v --verbose         be verbose
+
+           -B --base    <base>  path of 'locale' base folder
+
+Arguments: <lang>               language, 2-letter lower case like: de fr ...
+           <script>             script file to be translated
+
+Remarks:   Use the $ prefix like $"..." to flag translatable strings in source
+           scripts. At run-time bash uses TEXTDOMAIN and TEXTDOMAINDIR to find
+           the message catalogues for GNU gettxt.
+
+           The '_mini_bash_lib' proxy sets these variables when option '-t' is
+           passed. Also your source/deployment file system tree must look as it
+           is shown below to make it work. Example for 'src/local/your-script':
+
+            $CEN_NAME lang es                  # add Spanish to languages
+            $CEN_NAME dump your-script         # create/update l10n source
+            editor local/es/your-script.po  # edit translations
+            $CEN_NAME build your-script        # create message catalogues
+
+            .
+            ├── bin
+            │   └── _mini_bash_lib -> ../src/mini-bash-lib/_mini_bash_lib
+            ├── share
+            │   └── locale
+            │       ├── de
+            │       │   ├── LC_MESSAGES
+            │       │   │   ├── mini10.mo
+            │       │   │   ├── mini-bash-lib.mo
+            │       │   │   └── your-script.mo
+            │       │   ├── mini10.po               [*] not to be deployed
+            │       │   ├── mini-bash-lib.po        [*] ...
+            │       │   └── your-script.po          [*] ...
+            │       └── mini10
+            └── src
+                ├── mini-bash-lib
+                │   ├── _mini_bash_lib
+                │   └── mini-bash-lib
+                └── scripts                         [*] folder for scripts
+                    └── your-script
+
+            I10n for stand-alone scripts makes little sense. GNU gettxt wants
+            a 'locale/<lang>/LC_MESSAGES/<name>.mo' file. The 'centauribuilder'
+            tool of 'centauri-bash-lib' can embed mo files into a script, but
+            has to create the file tree in a temporary folder at run-time. This
+            is beyond the scope of 'mini-bash-lib'.
+
+!EOF
+}
+
+# ------------------------------------------------------------------------------
+# Pass control to app framework
+# ------------------------------------------------------------------------------
+main "$@" ; quit
+
+# End

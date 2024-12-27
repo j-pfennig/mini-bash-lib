@@ -3,7 +3,7 @@ CEN_LEGAL="Copyright Dr. J. Pfennig (c) 2007-2024; BSD License"
 CEN_TITLE="Example to demonstrate option handling"
 
 # use proxy to load mini-bash-lib or centauri-bash-lib (if installed)
-PATH="../../../src/mini-bash-lib:$PATH" . _mini_bash_lib -t - '0.01' || exit 2
+PATH+=":${0%/*}" . _mini_bash_lib - '0.01' || exit 2
 
 # declare global variables ...
 
@@ -19,7 +19,7 @@ run() {
     [ $# = 0 ] || { usage ; quit -s 1 ; }
 
     [ -z "$CEN_OPT_ADDR$CEN_OPT_ECHO$CEN_OPT_USER" ] && 
-        quit $"No -A/-E/-U option specified"
+        quit "No -A/-E/-U option specified"
 
     local text
     if [ -n "$CEN_OPT_ADDR" ] ; then

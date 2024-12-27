@@ -10,6 +10,7 @@
 #   -d -f (autoload dryrun force). It also registers quit_hook().
 # ------------------------------------------------------------------------------
 
+CEN_CMDBASE=
 CEN_CMDDATA=
 CEN_CMDCURR=1
 CEN_NAME="${BASH_ARGV0##*/}"
@@ -41,18 +42,37 @@ if [ -z "$CEN_FEATURE_N" ] ; then       # search for --mini option
 fi
 unset CEN_CMDCURR
 
+# we really need a physical path, try via builtin to avaoid a sub-shell
+if enable realpath && realpath -a CEN_CMDBASE "$BASH_SOURCE" ; then
+    enable -n realpath
+else
+    CEN_CMDBASE=$(realpath "$BASH_SOURCE") || CEN_CMDBASE="$BASH_SOURCE"
+fi &>/dev/null
+CEN_CMDBASE="${CEN_CMDBASE%/*}"
+
 if [ "$CEN_FEATURE_N" != 1 ] ; then     # try centauri-bash-lib
     CEN_CMDDATA=$(type -p '_centauri_bash_lib')
     CEN_CMDDATA="${CEN_CMDDATA%/*}/_centauri_bash_lib"
     [ -f "$CEN_CMDDATA" ] || CEN_FEATURE_N=1
 fi
 if [ "$CEN_FEATURE_N" = 1 ] ; then      # try mini-bash-lib
-    CEN_CMDDATA=$(realpath "$BASH_SOURCE")
-    CEN_CMDDATA="${CEN_CMDDATA%/*}/mini-bash-lib"
+    CEN_CMDDATA="$CEN_CMDBASE/mini-bash-lib"
     [ -f "$CEN_CMDDATA" ] || return 127
+    # set TEXTDOMAIN to mini library
+    if [ -n "$CEN_FEATURE_T" ] ; then
+        TEXTDOMAIN='mini-bash-lib' ; TEXTDOMAINDIR="${CEN_CMDBASE%/*/*}/shared/locale"
+    fi
 fi
-                                        # load packed version?
+
+# load library, have packed version?
 [ "${CEN_CMDDATA}.p" -nt "$CEN_CMDDATA" ] && CEN_CMDDATA+='.p'
 source "$CEN_CMDDATA" -a -d -f "$@"
+
+# set TEXTDOMAIN back to source
+if [ -n "$CEN_FEATURE_T" ] ; then
+    TEXTDOMAIN="$CEN_NAME" ; TEXTDOMAINDIR="${CEN_CMDBASE%/*/*}/shared/locale"
+fi
+echo $TEXTDOMAINDIR
+:
 
 # end
