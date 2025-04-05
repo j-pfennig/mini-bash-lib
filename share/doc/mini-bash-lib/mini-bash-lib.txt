@@ -1,0 +1,634 @@
+──────────────────────────────────────────────────────────────────────────────────────────────
+[1mTopic - content -[0m [1mDocumentation[0m
+──────────────────────────────────────────────────────────────────────────────────────────────
+[1mAbout:     [0mThis is text documents mini-bash-lib, a framework for writing bash scripts.
+
+           A script is usually a single file that does embed the library code or loads the
+           library at start-up time. The basic mini-bash-lib itself is contained in a single
+           file. The size is about 10 kByte in 400 lines of code.
+
+[1mContent:   [0m
+           • [4mmini bash lib[0m   Introduction and list of implemented functions
+           • [4mCoexistence[0m     Compatibility with centauri-bash-lib
+           • [4mFramework[0m       Understanding the framework functions
+           • [4mProxy[0m           Using the proxy for shared library usage
+           • [4mGettext[0m         Internationalization using GNU gettext
+
+[1mFunctions: [0mEach script activates the framework by calling '[1mmain[0m [1m"$@"[0m' passing all command line
+           arguments:
+
+           • [4mmain[0m        [[3mopt[0m...] [---] [[3marg[0m...]
+
+           The script code optionally implements some or all of the following functions that
+           get called by the framework:
+
+           • [4moptions[0m     [3mopt[0m [3marg[0m              # command line option parser
+           • [4mquit_hook[0m                        # cleaning up before termination
+           • [4mrun[0m         [3marg[0m...               # run the script's payload
+           • [4musage[0m                            # implement option --help
+
+──────────────────────────────────────────────────────────────────────────────────────────────
+[1mTopic - mini bash lib -[0m [1mA very minimal sub-set of centauri-bash-library[0m
+──────────────────────────────────────────────────────────────────────────────────────────────
+[1mPurpose:   [0mThe mini-bash-lib is of practical and educational use. Please note the following
+           limitations:
+
+           • it implements only something around 1% of centauri-bash-lib
+           • it is monolithic, e.g. there is no dynamic module loading
+           • it does not make use of loadable bash extensions
+
+           Besides of this, it still provides the following functionality:
+
+           • it can be used simplify scripting and to support debugging
+           • it demonstrates some of the main design goals of centauri-bash-lib:
+               framework: here only some option parsing, [4mrun[0m() and [4musage[0m()
+               debug support: options [1m-t[0m|[1m--trace[0m and [1m-d[0m|[1m--dryrun[0m, [4mtrace()[0m
+           • error handling: [4merror()[0m, [4mfatal()[0m, [4mquit()[0m, [4msystem()[0m to run commands
+           • simplify programming: [4mfolder()[0m, [4msplitjoin()[0m, [4msymlink()[0m, [4mconfirm()[0m
+           • reasonable console output: [4mmessage()[0m, [4mwarning()[0m, [4mtrace()[0m
+
+[1mContent:   [0mThe following functions and options are implemented:
+
+           [4mconfirm[0m     [[1m-a[0m|[1m-i[0m] [[1m-d[0m [3mdflt[0m] [[1m-f[0m] [[1m-n[0m|[1m-y[0m] [[1m-p[0m -|[3mwhat[0m] [[1m-s[0m [3mvnam[0m] [[1m-u[0m] [[1m--[0m] [3mtext[0m...
+           [4mcopy[0m        [[1m-f[0m|[1m-q[0m] [[1m-r[0m] [[1m-a[0m] [[1m-u[0m] [[1m--[0m] [3marg[0m...
+           [4mcreate[0m      [[1m-r[0m] [[1m-t[0m] [[1m-c[0m] [[1m-v[0m [3mvnam[0m] [[1m--[0m] [3mpath[0m|-
+           [4mdryrun[0m      [[1m-r[0m]
+           [4membed[0m       [[1m-a[0m|[1m-s[0m [3mvnam[0m] [[1m-e[0m|[1m-f[0m|[1m-q[0m|[1m-w[0m] [[1m-p[0m] [[1m-r[0m] [[1m-t[0m] [[1m--[0m] [3mtool[0m [3marg[0m...
+           [4merror[0m       [[1m-i[0m] [[1m-m[0m|[1m-p[0m] [[1m-q[0m|[1m-t[0m] [[1m--[0m] [3mtext[0m...
+           [4mfatal[0m       [[1m-m[0m|[1m-p[0m] [[1m--[0m] [3mtext[0m...
+           [4mfolder[0m      [[1m-c[0m] [[1m-m[0m] [[1m-p[0m] [[1m-f[0m|[1m-q[0m] [[1m--[0m] [3mpath[0m
+           [4mmessage[0m     [[1m-a[0m|[1m-i[0m] [[1m-c[0m [3mlabl[0m] [[1m-m[0m|[1m-p[0m] [[1m--[0m] [3mtext[0m...
+           [4moptarg[0m      [3mname[0m [3mvnam[0m|- [[1m-t[0m|[1m-f[0m] [[3mvalu[0m]
+           [4mrename[0m      [[1m-f[0m|[1m-q[0m] [[1m-r[0m] [[1m--[0m] [3marg[0m...
+           [4mremove[0m      [[1m-f[0m|[1m-q[0m] [[1m-r[0m] [[1m-d[0m] [[1m-o[0m] [[1m--[0m] [3marg[0m...
+           [4msplitjoin[0m   [[1m-j[0m|[1m-s[0m [3mvnam[0m] [[1m-d[0m [3mdeli[0m]
+           [4msymlink[0m     [[1m-f[0m|[1m-q[0m] [[1m-r[0m] [[1m-n[0m] [[1m-r[0m] [[1m--[0m] [3marg[0m...
+           [4msystem[0m      [[1m-a[0m|[1m-s[0m [3mvnam[0m] [[1m-c[0m] [[1m-d[0m [3mdeli[0m] [[1m-e[0m|[1m-f[0m|[1m-q[0m|[1m-t[0m|[1m-w[0m] [[1m-p[0m] [[1m-r[0m] [[1m-z[0m] [[1m--[0m] [3mtool[0m [3marg[0m...
+           [4mtmpfile[0m     [[1m-n[0m] [[1m-r[0m] [[1m-s[0m [3mvnam[0m]
+           [4mtrace[0m       [[1m-a[0m|[1m-i[0m] [[1m-c[0m [3mlabl[0m] [[1m-m[0m|[1m-p[0m] [[1m--[0m] [3mtext[0m...
+           [4mwarning[0m     [[1m-a[0m|[1m-i[0m] [[1m-m[0m|[1m-p[0m] [[1m--[0m] [3mtext[0m...
+           [4mquit[0m        [[1m-a[0m|[1m-i[0m] [[1m-e[0m|[1m-t[0m|[1m-u[0m] [[1m-m[0m|[1m-p[0m] [[1m-s[0m [3mcode[0m] [[1m--[0m] [3mtext[0m...
+
+[1mGeneral:   [0mThe order of options is not relevant, '[1m--[0m' terminates the option list (if not used
+           and the next argument starts with a '-' that argument would by parsed as an
+           option).
+
+           Function options are always a hyphen followed by a single letter. Arguments must be
+           a separate word. The command line parser, see [4moptions[0m(), and function options are
+           separate implementations.
+
+           Intentionally unknown function options are not causing an abort and stack trace
+           like in centauri-bash-lib, see [4mcoexistence[0m.
+
+──────────────────────────────────────────────────────────────────────────────────────────────
+[1mTopic - coexistence -[0m [1mUsing mini-bash-lib script with centauri-bash-lib installed[0m
+──────────────────────────────────────────────────────────────────────────────────────────────
+[1mSub-set:   [0mThe mini-bash-lib is a drop-in compatible sub-set of centauri-bash-lib. The mini
+           framework supports nothing but [4mmain[0m() [4moptions[0m() [4mrun[0m() and [4mquit()[0m. Only a core
+           sub-set of 20 functions is provided. Even these implemented functions have reduced
+           functionality.
+
+           Among other things centauri-bash-lib implements services, batch processing and so
+           called action verbs. Also error checking and debugging are supported much better.
+           The mini-bash-lib ignores unimplemented function options or bad use of options
+           where centauri-bash-lib aborts with a function call trace.
+
+[1mSwitching: [0mUnless centauri-bash-lib where a proxy is mandatory, the mini-bash-lib can be
+           embedded as a whole in the script or can use a proxy, see [4mproxy[0m. When using the
+           proxy an installed version of centauri-bash-lib gets loaded by default. The command
+           line option [1m"--mini"[0m can be used to prevent loading centauri-bash-lib:
+
+             [1m--mini[0m=0        # (default) use centauri-bash-lib if installed
+             [1m--mini[0m=1        # always use mini-bash-lib
+
+[1mTemplates: [0mThe folder [1m"/usr/share/doc/mini-bash-lib/Examples"[0m contains two files that can be
+           copied and used as a starting point for a new script:
+
+             [1mshared[0m          # template using the proxy
+             [1mstandalone[0m      # ... embedded mini-bash-lib
+
+[1mRemarks:   [0mGenerating mini-bash-lib scripts with centauricreate
+
+           run + The run function
+
+           usage + Providing help
+
+──────────────────────────────────────────────────────────────────────────────────────────────
+[1mTopic - framework -[0m [1mUnderstanding the framework functions[0m
+──────────────────────────────────────────────────────────────────────────────────────────────
+           The [1mframework[0m imposes a simple source structure and control flow:
+
+[1mSource:    [0m(A1) Load the proxy                         # shared version
+           (A2) Script code
+           (A3) Execute 'main [1m"$@"[0m ; quit'
+
+           (B1) Script code                            # embedded version
+           (B2) Embedded library code
+           (B3) Execute 'main [1m"$@"[0m ; quit'
+
+[1mControl Flow:[0m
+           (1) [4mmain[0m()                      # invoke framework
+           (2)     [4moptions[0m()               # optional: command line parser
+           (3) [4mrun[0m()                       # call by [[main()]]
+           (4)     ... payload ...         # the payload
+           (5) [4mquit()[0m                      # leave framework
+           (6)     [4mquit_hook[0m               # optional: custom clean-ups
+
+[1mRemarks:   [0mProxy             Using a proxy to load mini-bash-lib or centauri-bash-lib
+           Embedding         Embedding mini-bash-lib in a script, packing to source
+           Framework         Application framwork: main - options - usage - run - quit
+           Error handling    Creating robust scripts: error - quit - trace - dryrun
+           error [1m-t[0m        # status test
+           error [1m-q[0m        # test and call quit -e
+
+           quit [1m-e[0m         # 'terminated after error'
+           quit [1m-t[0m         # 'terminated'
+
+──────────────────────────────────────────────────────────────────────────────────────────────
+[1mTopic - proxy -[0m [1mUsing the proxy to sharing the library and to support i10n[0m
+──────────────────────────────────────────────────────────────────────────────────────────────
+[1mPurpose:   [0mInstead of embedding the library source into each script, a [1mproxy[0m can be used to
+           locate and load the library source in the file system tree. The [1mproxy[0m also enables
+           coexistence with centauri-bash-lib and allows to load GNU [4mgettext[0m translations
+           (i10n).
+
+[1mCall:      [0mThe [1mproxy[0m file is [1m_mini_bash_lib[0m. It is located using [1mPATH[0m and gets sourced by
+           bash:
+
+           [1mPATH+=[0m[1m":${0%/*}"[0m [1m. _mini_bash_lib[0m [3mopt[0m... [1m-[0m [3mvers[0m [1m|| exit 2[0m
+
+[1mArguments: [0m[3mopt[0m   [1mproxy[0m options, see below
+           [3mvers[0m  a version string like [1m"nn.mm"[0m
+
+[1mOptions:   [0m[1m-f[0m  enable the [1m--force[0m command line option
+           [1m-t[0m  enable [4mgettext[0m internationalization
+           [1m-n[0m  do never use centauri-bah-lib, see [4mcoexistence[0m
+           [1m-y[0m  enable [1m--yes[0m/[1m--no[0m cmd line options
+
+[1mExample:   [0mSee: [1m/usr/share/doc/mini-bash-lib/Examples/shared[0m
+
+[1mUsage:     [0mThe [1mproxy[0m code must be in then same folder as the library itself. The best way to
+           using it is symlinking the [1mproxy[0m from [1m/usr/local/bin[0m to the installation folder.
+           Obviously [1m/usr/local/bin[0m must be in your [1mPATH[0m:
+
+           ┃ cd /usr/local/bin
+           ┃ ln [1m-s[0m /usr/share/src/mini-bash-lib/_mini_bash_lib .
+
+           ┃ PATH+=:/usr/local/bin               # should be in your shell profile
+
+           Alternatively any folder containing a script using the [1mproxy[0m can have an explicit
+           symlink to the [1mproxy[0m. In this case [1mPATH[0m needs no reference to the folder:
+
+           ┃ cd ~/my-tools                       # a private folder
+           ┃ ln [1m-s[0m /usr/share/src/mini-bash-lib/_mini_bash_lib .
+
+           ┃ ~/my-tools/example                  # no need to set PATH
+
+[1mRemarks:   [0m[1mDo not copy the proxy, use symbolic links only[0m. The [1mproxy[0m runs [1mrealpath[0m to locate
+           mini-bash-lib via the symbolic link.
+
+           The processing the [1m--mini[0m command line option is part of the [1mproxy[0m. This option is
+           otherwise ignored by mini-bash-lib and centauri-bash-lib.
+
+           When using mini-bash-lib (see [4mcoexistence[0m), all [1mproxy[0m options and arguments are
+           passed to _centauri_bash_lib (e.g. the [1mproxy[0m of centauri-bash-lib).
+
+──────────────────────────────────────────────────────────────────────────────────────────────
+[1mTopic - gettext -[0m [1mInternationalization using GNU gettext[0m
+──────────────────────────────────────────────────────────────────────────────────────────────
+[1mBla:       [0mbla bla
+
+[1mBla:       [0mbla bla
+
+[1mRemarks:   [0mbla
+
+──────────────────────────────────────────────────────────────────────────────────────────────
+[1mTopic - main -[0m [1mCallback: Invoking the framework, option parsing[0m
+──────────────────────────────────────────────────────────────────────────────────────────────
+[1mcommand line:[0m
+           The [1mmain[0m() function is the entry point for a script's code. It parses command line
+           options (not to be confused with function options) and passed the remaining call
+           arguments to [4mrun[0m().
+
+[1moptions:   [0mThe framework implements a few options by default, see below. If a script
+           implements an [4moptions[0m() function, this gets called before the internal
+           implementation. For each command line option the options function is called once,
+           see [4moptarg()[0m. When all options were processed ... empty call ...
+
+[1mCall:      [0m[1mmain[0m [[3mopt[0m...] [---] [[3marg[0m...]
+
+[1mOptions:   [0m-[3mchar[0m             short option
+           -[3mchar[0m[3mvalue[0m      short option with value (no separating space)
+           -[3mchar[0m [3mvalue[0m     short option followed by value argument
+           [1m--[0m[3mname[0m            long option
+           [1m--[0m[3mname[0m=[3mvalue[0m    long option with value (using [1m"="[0m separator)
+           [1m--[0m[3mname[0m [3mvalue[0m    short option followed by value argument
+
+[1mArguments: [0meverything goes
+
+[1mReturn:    [0mnot used, see [4mquit()[0m
+
+──────────────────────────────────────────────────────────────────────────────────────────────
+[1mTopic - options -[0m [1mCallback: Command Line Option Parser[0m
+──────────────────────────────────────────────────────────────────────────────────────────────
+[1mPurpose:   [0mbla
+
+[1mImportant: [0m[1mDO NOT[0m 'exit' or quit
+
+──────────────────────────────────────────────────────────────────────────────────────────────
+[1mTopic - quit_hook -[0m [1mCallback: Cleaning up before Termination[0m
+──────────────────────────────────────────────────────────────────────────────────────────────
+[1mPurpose:   [0mbla
+
+[1mImportant: [0m[1mDO NOT[0m 'exit' or quit
+
+──────────────────────────────────────────────────────────────────────────────────────────────
+[1mTopic - usage -[0m [1mCallback: Implement Option --help[0m
+──────────────────────────────────────────────────────────────────────────────────────────────
+[1mPurpose:   [0mbla
+
+[1mImportant: [0m[1mDO NOT[0m 'exit' or quit
+
+──────────────────────────────────────────────────────────────────────────────────────────────
+[1mTopic - run -[0m [1mCallback: run the Payload Part of a Script[0m
+──────────────────────────────────────────────────────────────────────────────────────────────
+[1mCall:      [0m[1mrun[0m [[3marg[0m...]
+
+[1mRemarks:   [0mThis function is a custom function that is called by [4mmain[0m() after option parsing.
+           To make sure that [4mquit()[0m gets called in case that [1mrun[0m returns, always invoke the
+           framework as:
+
+           ┃ main [1m"$@"[0m ; quit
+
+           The return code of [1mrun[0m is not interpreted. Also the [1mrun[0m is option, if not
+           present the framework calls [4mquit()[0m after option parsing.
+
+──────────────────────────────────────────────────────────────────────────────────────────────
+[1mFunction - confirm -[0m [1mprompt for console input[0m
+──────────────────────────────────────────────────────────────────────────────────────────────
+[1mCall:      [0m[1mconfirm[0m [[1m-a[0m|[1m-i[0m] [[1m-d[0m [3mdflt[0m] [[1m-f[0m] [[1m-n[0m|[1m-y[0m] [[1m-p[0m -|[3mwhat[0m] [[1m-s[0m [3mvnam[0m] [[1m-u[0m] [[1m--[0m] [3mtext[0m...
+
+[1mOptions:   [0m[1m-a[0m  indent automatically
+           [1m-d[0m  default reply, also used with '[1m-p[0m .'
+           [1m-f[0m  printf formatting, 1st non-options argument is format
+           [1m-i[0m  always indent
+           [1m-n[0m  yes/No prompt, short for: [1m-p[0m ' [y/N]? ' [1m-d[0m 'no'
+           [1m-p[0m  appended to prompt text, see below for [1m"-"[0m|[1m"+"[0m|[1m"."[0m
+           [1m-s[0m  save reply to [3mvnam[0m variable
+           [1m-u[0m  allow upper case characters in reply
+           [1m-y[0m  Yes/no prompt, short for: [1m-p[0m ' [n/Y]? ' [1m-d[0m 'yes'
+
+[1mArguments: [0m[3mdflt[0m          final part of prompt. Example: [1m" [OK]? "[0m
+           [3mtext[0m          prompt message
+           [3mvnam[0m          name of a variable to receice input
+           [3mwhat[0m  -       ask for free text input
+                 +       ask for a password (no echo)
+                 .       append ' [[3mdflt[0m]: ' to prompt text
+                 [3many[0m     append ' [3many[0m ' to prompt text
+           [3mtext[0m          prompt text
+
+[1mReturn:    [0m[1mtrue[0m for [1m"yes"[0m answer or non-empty result otherwise
+           [1mfalse[0m for [1m"no"[0m answer or empty result
+
+[1mRemarks:   [0mThe options [1m--yes[0m/[1m--no[0m passed to main cause prompts to be suppressed and to return
+           the following result:
+
+           [1m--no[0m    [1mconfirm[0m always returns false
+           [1m--yes[0m   accept the default answer (as if [3mreturn[0m were hit)
+
+[1mExamples:  [0m[1mconfirm[0m [1m-p[0m '.' [1m-d[0m 'good' 'How do you feel today'
+
+──────────────────────────────────────────────────────────────────────────────────────────────
+[1mFunction - copy -[0m [1mconveniency wrapper for coreutils 'cp'[0m
+──────────────────────────────────────────────────────────────────────────────────────────────
+[1mCall:      [0m[1mcopy[0m [[1m-f[0m|[1m-q[0m] [[1m-r[0m] [[1m-a[0m] [[1m-u[0m] [[1m--[0m] [3marg[0m...
+
+[1mOptions:   [0m[1m-a[0m  run 'cp [1m-a[0m' (archive)
+           [1m-f[0m  make errors fatal
+           [1m-q[0m  do not report errors
+           [1m-r[0m  ignore [1m--dryrun[0m
+           [1m-u[0m  run 'cp [1m-u[0m' (update)
+
+           options not listed above are ignored
+
+[1mArguments: [0m[3marg[0m   all arguments are literally passed to 'cp'
+
+[1mReturn:    [0mThe status of 'cp' or [1mfalse[0m with [1m--dryrun[0m
+
+[1mRemarks:   [0mThis function executes something like [1m"system -e -p -- cp <arg>"[0m to simplify error
+           handling.
+
+──────────────────────────────────────────────────────────────────────────────────────────────
+[1mFunction - create -[0m [1mcreate a file, write to file or stdout[0m
+──────────────────────────────────────────────────────────────────────────────────────────────
+[1mCall:      [0m[1mcreate[0m [[1m-r[0m] [[1m-t[0m] [[1m-c[0m] [[1m-v[0m [3mvnam[0m] [[1m--[0m] [[3mpath[0m|[1m-[0m]
+
+[1mOptions:   [0m[1m-c[0m  copy from stdin
+           [1m-r[0m  ignore [1m--dryrun[0m
+           [1m-t[0m  truncate, replace an existing file
+           [1m-v[0m  get data from (array) variable
+
+[1mArguments: [0m[3mpath[0m  file path or '-' for /dev/stdout
+           [3mvnam[0m  name of a variable
+
+[1mReturn:    [0m[1mtrue[0m on success  -or-  [1mfalse[0m otherwise
+
+[1mRemarks:   [0mWithout option [1m-t[0m this function does nothing and returns [1mfalse[0m if [3mpath[0m already
+           exists. This function does not try by itself to append to an existing file, but
+           will do so for a file already opened in append mode.
+
+──────────────────────────────────────────────────────────────────────────────────────────────
+[1mFunction - dryrun -[0m [1mtest for option --dryrun, generate trace message[0m
+──────────────────────────────────────────────────────────────────────────────────────────────
+[1mCall:      [0m[1mdryrun[0m [[1m-r[0m] [[1m--[0m] [3mtext[0m...
+
+[1mOptions:   [0m[1m-r[0m  ignore [1m--dryrun[0m (return [1mfalse[0m)
+
+           options not listed above are ignored
+
+[1mArguments: [0m[3mtext[0m  text for [1m--dryrun[0m [4mtrace()[0m message
+
+[1mReturn:    [0m[1mtrue[0m for [1m--dryrun[0m, [1mfalse[0m otherwise
+
+[1mExamples:  [0m┃ [1mdryrun[0m [1m"skip some steps"[0m && return
+
+           ┃ if ! [1mdryrun[0m [1m"Create file list:"[0m [1m"$PWD"[0m ; then
+           ┃     ls -1 > [1m"$tmpfile"[0m
+           ┃ fi
+
+──────────────────────────────────────────────────────────────────────────────────────────────
+[1mFunction - embed -[0m [1mrun another script like a sub-routine[0m
+──────────────────────────────────────────────────────────────────────────────────────────────
+[1mCall:      [0m[1membed[0m [[1m-a[0m|[1m-s[0m [3mvnam[0m] [[1m-e[0m|[1m-f[0m|[1m-q[0m|[1m-w[0m] [[1m-p[0m] [[1m-r[0m] [[1m-t[0m] [[1m--[0m] [3mtool[0m [3marg[0m...
+
+[1mOptions:   [0m[1m-a[0m  return output as array of lines in [3mvnam[0m
+           [1m-e[0m  output an error message on error
+           [1m-f[0m  make errors fatal
+           [1m-p[0m  pretty print error/warning output
+           [1m-q[0m  redirect [1mstdout[0m and [1mstderr[0m to [1m"/dev/null"[0m
+           [1m-r[0m  ignore [1m--dryrun[0m
+           [1m-s[0m  return output as a single line in [3mvnam[0m
+           [1m-t[0m  silent test, return [1mfalse[0m for previous error
+           [1m-w[0m  output a warning on error
+
+[1mArguments: [0m[3mtool[0m  a mini-bash-lib or centauri-bash-lib script to be run
+           [3marg[0m   options or arguments passed to the script
+
+[1mRemark:    [0mThe current script name is passed to [3mtool[0m as [1m--embed[0m=$[1mCEN_NAME[0m.
+
+[1mReturn:    [0mThe return code of [3mtool[0m unless 3 (abort). In the later case [1membed[0m() does call
+           [1m"quit -s 3"[0m.
+
+──────────────────────────────────────────────────────────────────────────────────────────────
+[1mFunction - error -[0m [1moutput an error message[0m
+──────────────────────────────────────────────────────────────────────────────────────────────
+[1mCall:      [0m[1merror[0m [[1m-a[0m|[1m-i[0m] [[1m-m[0m|[1m-p[0m] [[1m-q[0m|[1m-t[0m] [[1m--[0m] [3mtext[0m...
+
+[1mOptions:   [0m[1m-a[0m  auto-indent (e.g. do not print the script name)
+           [1m-i[0m  always indent
+           [1m-m[0m  multi-line output (one line per [3mtext[0m argument)
+           [1m-p[0m  printf formatting (1st [3mtext[0m arg. is format)
+           [1m-q[0m  call [1m"quit -q"[0m if a previous [1merror[0m has occurred
+           [1m-t[0m  silent test, return [1mfalse[0m for previous [1merror[0m
+
+[1mArguments: [0m[3mtext[0m  Any text to be output
+
+[1mReturn:    [0m[1mtrue[0m on success (only [1m-q[0m|[1m-t[0m)  -or-  [1mfalse[0m otherwise
+
+[1mExamples:  [0m┃ system    cmd1
+           ┃ system [1m-t[0m cmd2
+           ┃ [1merror[0m [1m-q[0m [1m"A previous command has failed"[0m
+
+           ┃ while [1merror[0m [1m-t[0m ; do
+           ┃     do_something
+           ┃ done
+
+──────────────────────────────────────────────────────────────────────────────────────────────
+[1mFunction - fatal -[0m [1moutput a fatal error message and run quit[0m
+──────────────────────────────────────────────────────────────────────────────────────────────
+[1mCall:      [0m[1mfatal[0m [[1m-m[0m|[1m-p[0m] [[1m--[0m] [3mtext[0m...
+
+[1mOptions:   [0m[1m-a[0m  auto-indent (e.g. do not repeat to script name)
+           [1m-i[0m  always indent
+           [1m-m[0m  multi-line output (one line per [3mtext[0m argument)
+           [1m-p[0m  printf formatting (1st [3mtext[0m arg. is format)
+
+[1mArguments: [0m[3mtext[0m  Any text to be output
+
+[1mReturn:    [0mThis function never returns
+
+──────────────────────────────────────────────────────────────────────────────────────────────
+[1mFunction - folder -[0m [1mchange working folder or create a new folder[0m
+──────────────────────────────────────────────────────────────────────────────────────────────
+[1mCall:      [0m[1mfolder[0m [[1m-c[0m] [[1m-m[0m] [[1m-p[0m] [[1m-f[0m|[1m-q[0m] [[1m--[0m] [3mpath[0m
+
+[1mOptions:   [0m[1m-c[0m  change current [1mfolder[0m (default is to check existence)
+           [1m-f[0m  make errors fatal
+           [1m-m[0m  create [1mfolder[0m as needed
+           [1m-p[0m  change to physical path
+           [1m-q[0m  do not report errors
+
+[1mArguments: [0m[3mpath[0m  [1mfolder[0m path
+
+[1mReturn:    [0m[1mtrue[0m on success  -or-  [1mfalse[0m otherwise
+
+──────────────────────────────────────────────────────────────────────────────────────────────
+[1mFunction - message -[0m [1mOutput text to stderr[0m
+──────────────────────────────────────────────────────────────────────────────────────────────
+[1mCall:      [0m[1mmessage[0m [[1m-a[0m|[1m-i[0m] [[1m-c[0m [3mlabl[0m] [[1m-m[0m|[1m-p[0m] [[1m--[0m] [3mtext[0m...
+
+[1mOptions:   [0m[1m-a[0m  auto-indent (e.g. do not repeat to script name)
+           [1m-c[0m  start with an 18 char fixed size label field
+           [1m-i[0m  always indent
+           [1m-m[0m  multi-line output (one line per [3mtext[0m argument)
+           [1m-p[0m  printf formatting (1st [3mtext[0m arg. is format)
+
+[1mArguments: [0m[3mlabl[0m  label field text (field width is 18 chars)
+           [3mtext[0m  Any text to be output
+
+[1mReturn:    [0m[1mtrue[0m on success
+
+──────────────────────────────────────────────────────────────────────────────────────────────
+[1mFunction - optarg -[0m [1mOption setter for use in options() call-back[0m
+──────────────────────────────────────────────────────────────────────────────────────────────
+[1mCall:      [0m(1) [1moptarg[0m [3mname[0m [3mvnam[0m|- [1m-f[0m
+           (2) [1moptarg[0m [3mname[0m [3mvnam[0m|- [1m-t[0m [[3mvalu[0m]
+
+[1mOptions:   [0m[1m-f[0m      flag option, set [3mvnam[0m to [1m"1"[0m
+           [1m-t[0m      text option, set [3mvnam[0m to option argument or [3mvalu[0m
+
+[1mArguments: [0m[3mname[0m  option long name
+           [3mvnam[0m  name of a variable to be set. If [1m"-"[0m the name is generated
+                 from name like: [1mCEN_OPT_[0m[3mname[0m
+           [3mvalu[0m  default used when the option argument is [1m"-"[0m
+
+[1mReturn:    [0m[1mtrue[0m on success
+
+──────────────────────────────────────────────────────────────────────────────────────────────
+[1mFunction - rename -[0m [1mconveniency wrapper for coreutils 'mv'[0m
+──────────────────────────────────────────────────────────────────────────────────────────────
+[1mCall:      [0m[1mrename[0m [[1m-f[0m|[1m-q[0m] [[1m-r[0m] [[1m--[0m] [3marg[0m...
+
+[1mOptions:   [0m[1m-f[0m  make errors fatal
+           [1m-q[0m  do not report errors
+           [1m-r[0m  ignore [1m--dryrun[0m
+
+[1mArguments: [0m[3marg[0m   passed to [1m"mv"[0m tool
+
+[1mReturn:    [0m[1mtrue[0m on success  -or-  [1mfalse[0m otherwise
+
+[1mRemarks:   [0mThis function executes something like [1m"system -e -p -- mv <arg>"[0m to simplify error
+           handling. Unlike in centauri-bash-lib no bash builtin is used.
+
+──────────────────────────────────────────────────────────────────────────────────────────────
+[1mFunction - remove -[0m [1mconveniency wrapper for coreutils 'rm'[0m
+──────────────────────────────────────────────────────────────────────────────────────────────
+[1mCall:      [0m[1mremove[0m [[1m-f[0m|[1m-q[0m] [[1m-r[0m] [[1m-d[0m] [[1m-o[0m] [[1m--[0m] [3marg[0m...
+
+[1mOptions:   [0m[1m-f[0m  make errors fatal
+           [1m-d[0m  [1mremove[0m folders recursively
+           [1m-o[0m  pass [1m"--one-filesystem"[0m to [1m"rm"[0m
+           [1m-q[0m  do not report errors
+           [1m-r[0m  ignore [1m--dryrun[0m
+
+[1mArguments: [0m[3marg[0m   passed to [1m"rm"[0m tool
+
+[1mReturn:    [0m[1mtrue[0m on success  -or-  [1mfalse[0m otherwise
+
+[1mRemarks:   [0mThis function executes something like [1m"system -e -p -- rm -f <arg>"[0m to simplify
+           error handling. Unlike in centauri-bash-lib no bash builtin is used.
+
+──────────────────────────────────────────────────────────────────────────────────────────────
+[1mFunction - splitjoin -[0m [1msplit text data into array or join data to string[0m
+──────────────────────────────────────────────────────────────────────────────────────────────
+[1mCall:      [0m[1msplitjoin[0m [1m-j[0m [3mvstr[0m [[1m-d[0m [3mdeli[0m] [[1m--[0m] [3mtext[0m...           # join to string
+            [1msplitjoin[0m [1m-s[0m [3mvarr[0m [[1m-d[0m [3mdeli[0m] [[1m--[0m] [3mtext[0m...           # split to array
+
+[1mOptions:   [0m[1m-d[0m  IFS delimiters (default [1m-j[0m: '\t' [1m-s[0m: '\t\n')
+           [1m-j[0m  join to a single string, default delimiter is '\t' (tab)
+           [1m-s[0m  split to array, default delimiter is '\n\[1m-t[0m' (nl and tab)
+
+[1mArguments: [0m[3mdeli[0m  list of single char field delimiters (processed via printf)
+           [3mvarr[0m  name of array variable for split result
+           [3mvstr[0m  name of string variable for joiin result
+           [3mtext[0m  any input data
+
+[1mReturn:    [0m[1mtrue[0m on success
+
+──────────────────────────────────────────────────────────────────────────────────────────────
+[1mFunction - symlink -[0m [1mconveniency wrapper for corutils 'ln -s'[0m
+──────────────────────────────────────────────────────────────────────────────────────────────
+[1mCall:      [0m[1msymlink[0m [[1m-f[0m|[1m-q[0m] [[1m-l[0m] [[1m-n[0m] [[1m-r[0m] [[1m--[0m] [3marg[0m...
+
+[1mOptions:   [0m[1m-f[0m  make errors fatal
+           [1m-l[0m  make a relative [1msymlink[0m
+           [1m-n[0m  no error checks, use [1m"ln -s -f"[0m
+           [1m-q[0m  do not report errors
+           [1m-r[0m  ignore [1m--dryrun[0m
+
+[1mArguments: [0m[3marg[0m   passed to [1m"ln"[0m tool
+
+[1mReturn:    [0m[1mtrue[0m on success  -or-  [1mfalse[0m otherwise
+
+[1mRemarks:   [0mThis function executes something like [1m"system -e -p -- ln -s <arg>"[0m to simplify
+           error handling. Unlike in centauri-bash-lib no bash builtin is used.
+
+──────────────────────────────────────────────────────────────────────────────────────────────
+[1mFunction - system -[0m [1mRun an external (or builtin) command[0m
+──────────────────────────────────────────────────────────────────────────────────────────────
+[1mCall:      [0m[1msystem[0m [[1m-a[0m|[1m-s[0m [3mvnam[0m] [[1m-d[0m [3mdeli[0m] [[1m-e[0m|[1m-f[0m|[1m-q[0m|[1m-w[0m] [[1m-p[0m] [[1m-r[0m] [[1m-t[0m] [[1m-z[0m] [[1m--[0m] [3mtool[0m [3marg[0m...
+           [1msystem[0m [1m-c[0m [[1m-e[0m|[1m-f[0m|[1m-q[0m|[1m-w[0m] [[1m--[0m] [3mtool[0m...
+
+[1mOptions:   [0m[1m-a[0m  capture output to array
+           [1m-c[0m  check if arguments are executable commands
+           [1m-d[0m  set IFS word separators or set line mode
+           [1m-e[0m  output an error message on error
+           [1m-f[0m  make errors fatal
+           [1m-p[0m  pretty print error/warning output
+           [1m-q[0m  redirect [1mstdout[0m and [1mstderr[0m to [1m"/dev/null"[0m
+           [1m-r[0m  ignore [1m--dryrun[0m
+           [1m-s[0m  capture output to string
+           [1m-t[0m  do not run after previous error
+           [1m-w[0m  output a warning on error
+           [1m-z[0m  capture [1mstderr[0m only. do not interfere with [1mstdout[0m
+
+[1mArguments: [0m[3mtool[0m  external or builtin command to use
+           [3marg[0m   arguemnts for [3mtool[0m
+           [3mdeli[0m  ...
+           [3mvnam[0m  name of a string or array variable
+
+[1mNotes:     [0mmini-bash-lib not explicitly support bash loadables. So [1msystem[0m makes no difference
+           beween builtin are external commands.
+
+           [1msystem[0m cannot by used recursively, so better don't call functions.
+
+           While centauri-bash-lib uses [1m"$(...)"[0m to run a command mini-bash-lib redirects to a
+           temporary file (like [1msysrun[0m of centaur-bash-lib does). This avoids the overhead of
+           a sub-shell but prevents recursive use.
+
+[1mReturn:    [0m[1mtrue[0m on success  -or-  [1mfalse[0m otherwise
+
+──────────────────────────────────────────────────────────────────────────────────────────────
+[1mFunction - tmpfile -[0m [1mcreate a temporary file that get deleted by quit[0m
+──────────────────────────────────────────────────────────────────────────────────────────────
+[1mCall:      [0m[1mtmpfile[0m [[1m-n[0m] [[1m-r[0m] [[1m-s[0m [3mvnam[0m]
+
+[1mOptions:   [0m[1m-n[0m  do not actually create a file, return path only
+           [1m-r[0m  ignore [1m--dryrun[0m
+           [1m-s[0m  save path to given variable, default is [1mCEN_TEMPFILE[0m
+
+[1mArguments: [0m[3mvnam[0m  name of a variable to receive the path
+
+[1mReturn:    [0m[1mtrue[0m on success  -or-  [1mfalse[0m otherwise
+
+[1mRemarks:   [0mAt program exit the [4mquit()[0m function recursively deletes all temporary objects that
+           have a path obtained from [1mtmpfile[0m().
+
+──────────────────────────────────────────────────────────────────────────────────────────────
+[1mFunction - trace -[0m [1mWrite a trace message to stderr output[0m
+──────────────────────────────────────────────────────────────────────────────────────────────
+[1mCall:      [0m[1mtrace[0m [[1m-a[0m|[1m-i[0m] [[1m-c[0m [3mlabl[0m] [[1m-m[0m|[1m-p[0m] [[1m--[0m] [3mtext[0m...
+
+[1mOptions:   [0m[1m-a[0m  auto-indent (e.g. do not print the script name)
+           [1m-c[0m  start with an 18 char fixed size label field
+           [1m-i[0m  always indent
+           [1m-m[0m  multi-line output (one line per [3mtext[0m argument)
+           [1m-p[0m  printf formatting (1st [3mtext[0m arg. is format)
+
+[1mArguments: [0m[3mlabl[0m  label field text (field width is 18 chars)
+           [3mtext[0m  Any text to be output
+
+[1mReturn:    [0m[1mtrue[0m on success
+
+──────────────────────────────────────────────────────────────────────────────────────────────
+[1mFunction - warning -[0m [1mWrite a warning message to stderr output[0m
+──────────────────────────────────────────────────────────────────────────────────────────────
+[1mCall:      [0m[1mwarning[0m [[1m-a[0m|[1m-i[0m] [[1m-m[0m|[1m-p[0m] [[1m--[0m] [3mtext[0m...
+
+[1mOptions:   [0m[1m-a[0m  auto-indent (e.g. do not print the script name)
+           [1m-i[0m  always indent
+           [1m-m[0m  multi-line output (one line per [3mtext[0m argument)
+           [1m-p[0m  printf formatting (1st [3mtext[0m arg. is format)
+
+[1mArguments: [0m[3mtext[0m  Any text to be output
+
+[1mReturn:    [0m[1mtrue[0m on success
+
+──────────────────────────────────────────────────────────────────────────────────────────────
+[1mFunction - quit -[0m [1mterminate application, remove temporary files[0m
+──────────────────────────────────────────────────────────────────────────────────────────────
+[1mCall:      [0m[1mquit[0m [[1m-a[0m|[1m-i[0m] [[1m-e[0m] [[1m-m[0m|[1m-p[0m] [[1m-s[0m [3mcode[0m] [[1m-t[0m] [[1m--[0m] [3mtext[0m...
+
+[1mOptions:   [0m[1m-a[0m  auto-indent (e.g. do not print the script name)
+           [1m-e[0m
+           [1m-i[0m  always indent
+           [1m-m[0m  multi-line output (one line per [3mtext[0m argument)
+           [1m-p[0m  printf formatting (1st [3mtext[0m arg. is format)
+           [1m-s[0m
+           [1m-t[0m
+
+[1mArguments: [0m[3mcode[0m  application exit code
+           [3mtext[0m  Any text to be output
+
+[1mReturn:    [0m...
+

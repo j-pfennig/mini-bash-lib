@@ -1,12 +1,13 @@
 #!/usr/bin/bash
-CEN_LEGAL="Copyright Dr. J. Pfennig (c) 2007-2024; BSD License"
+CEN_LEGAL="Copyright Dr. J. Pfennig (c) 2007-2025; BSD License"
 CEN_TITLE="Tool that strips comments and extra spaces or quotes"
 
 # use proxy to load mini-bash-lib or centauri-bash-lib (if installed)
-PATH="../../../src/mini-bash-lib:$PATH" . _mini_bash_lib - '0.01' || exit 2
+PATH+=":${0%/*}" . _mini_bash_lib -n - '0.02' || exit 2
 
 # declare global variables ...
 
+CEN_OPT_DOCTEXT=        # see --doctext
 CEN_OPT_EMPTY=          # see --empty
 CEN_OPT_NUMBER=         # see --number
 CEN_OPT_OUTPUT=         # see --output
@@ -45,6 +46,15 @@ run() {
         DAT_FOUT="$fout"                # used in hook function
     fi
 
+    # process documentation blocks
+    if [ -n "$CEN_OPT_DOCTEXT" ] ; then
+        if [ -n "$CEN_OPT_OUTPUT" ] ; then
+            doctext "${data[@]}" >"$fout"
+        else
+            doctext "${data[@]}"
+        fi
+        quit
+    fi
 
     local item itrm tail here line=0 outp=()
 
@@ -96,7 +106,6 @@ run() {
             # function declarations
             item="${item/() \{/()\{}"
             # some case statements
-           # [ "${item::1}" = '-' ] && item="${item/) /)}"
             case "$item" in
                 -*\)\ *) item="${item/) /)}" ;;
                 \*\)\ *) item="${item/) /)}" ;;
@@ -182,6 +191,87 @@ cleanup() {
 }
 
 # ------------------------------------------------------------------------------
+# Handle documentation comments
+# ------------------------------------------------------------------------------
+doctext() {
+    local _line _blck _isok
+    while : ; do                            # loop over blocks
+        _blck=() ; _isok=
+        while [ $# -gt 0 ] ; do             # search start of block
+            _line="$1" ; shift
+            [[ "$_line" == \#\ ----* ]] && break
+            docline "$_line"
+        done
+
+        for _isok in 0 0 0 1 ; do           # check mimimum size
+            [ $# -gt 0 ] || return
+            _line="$1" ; shift
+            [[ "$_line" == \#* ]] || break
+            [[ "$_line" == \#\ ----* ]] && break
+            _blck+=("$_line")
+        done
+        if [ "$_isok" != 1 ] ; then
+            [ -z "$CEN_OPT_TRIM" ] && [ -n "$CEN_OPT_EMPTY" ] &&
+                for _line in "$_line" "${_blck[@]}" "$_line" ; do
+                    docline "$_line"
+                done
+            continue
+        fi
+        while [ $# -gt 0 ] ; do             # get block body lines
+            _line="$1" ; shift
+            if [[ "$_line" != \#* ]] ; then
+                _isok= ; break
+            fi
+            [[ "$_line" == \#\ ----* ]] && break
+            _blck+=("$_line")
+        done
+### TODO
+        [ "$_isok" = 1 ] && docblock "${_blck[@]}"
+    done
+}
+
+docblock() {
+    [ -n "$CEN_OPT_EMPTY" ] && return
+    local line frst=1
+    echo
+    [ -z "$CEN_OPT_TRIM" ] && echo '# --------'
+    while [ $# -gt 0 ] ; do
+        if [ "${1::2}" = '##' ] ; then
+            shift ; continue
+        fi
+        if [ -z "$CEN_OPT_TRIM" ] ; then
+            echo "$1" ; shift ; continue
+        fi
+        line="${1:2}" ; shift
+        line="${line//[°§]/ }"
+        line="${line//\'\'\'/}"
+        line="${line//\*\*/}"
+
+        line="${line//[[/}"
+        line="${line// ]]/ ] ]}"
+        line="${line//]]/}"
+
+        printf '%s\n' "$line"
+        [ -n "$frst" ] && printf '%s\n' "${line//?/-}"
+        frst=
+    done
+    [ -z "$CEN_OPT_TRIM" ] && echo '# --------'
+}
+
+DAT_DOCTEXT=
+docline() {
+    [ -z "$CEN_OPT_EMPTY" ] && return
+    [ "${1::2}" = '##' ] && return
+    if [ -n "$CEN_OPT_TRIM" ] ; then
+        [ "${1::13}" = '# shellcheck ' ] && return
+    fi
+    if [ -n "$1" ] ; then
+        DAT_DOCTEXT=1 ; printf '%s\n' "$1" ; return
+    fi
+    [ -n "$DAT_DOCTEXT" ] && echo ; DAT_DOCTEXT=
+}
+
+# ------------------------------------------------------------------------------
 # Custom options
 # ------------------------------------------------------------------------------
 options() {
@@ -190,6 +280,7 @@ options() {
         '') [ -n "$CEN_OPT_WORLD" ] && { CEN_OPT_UGLIFY=1 ; CEN_OPT_EMPTY=1 ; }
             [ -n "$CEN_OPT_UGLIFY" ] && CEN_OPT_TRIM=1 ;;
 
+        -D|--doc*) optarg  'doctext' -   -f ;;      # flag
         -E|--emp*) optarg  'empty'   -   -f ;;      # flag
         -N|--num*) optarg  'number'  -   -f ;;      # flag
         -O|--out*) optarg  'output'  -   -t ;;      # text option
@@ -213,6 +304,7 @@ Options:   -d --dryrun          show what would be done, make no changes
            -q --quiet           report errors only
            -v --verbose         be verbose
 
+           -D --doctext         extract documentation text
            -E --empty           skip empty output lines
            -N --number          output line numbers
            -O --output <fout>   specity an output file
@@ -229,6 +321,15 @@ Remarks:   Use '$CEN_NAME -W -O <file> .' to create a script template based on
            In 'centauri-bash-lib' there is a tool named 'uglify' for similar
            purposes. While '$CEN_NAME' is very stupid and barely understands
            more of Bash scripting thant needed, 'uglify' is somewhat smarter.
+
+Examples:  # pack mini-bash-lib source (.p file)
+           $CEN_NAME -U -E -O . .
+           # remove documentation comments from source
+           $CEN_NAME -D -E -O myfile.pack myfile        # keep some comments
+           $CEN_NAME -D -E -T -O myfile.pack myfile     # remove most comments
+           # extract documentation comments
+           $CEN_NAME -D -O myfile.doc myfile            # for centaurihelp -U
+           $CEN_NAME -D -O -T myfile.doc myfile         # text only
 
 !EOF
 }

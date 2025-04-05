@@ -1,17 +1,18 @@
 #!/usr/bin/bash
 # ------------------------------------------------------------------------------
-# This is a proxy for mini-bash-lib. If enabled it loads centauri-bash-lib
-# instead of mini-bash-lib. There are 2 ways to disable this:
+# This is a proxy for mini-bash-lib. If enabled it can load centauri-bash-lib
+# instead of mini-bash-lib. There are three ways to disable this:
 #
 #   1)  CEN_FEATURE_N=1                 # before calling the proxy  -or-
 #   2)  _mini_bash_lib  ... -n ...      # disable centauri-bash-lib
+#   3)  --mini=1                        # command line option
 #
 #   The proxy passes all arguments to centauri-bash-lib but always sets -a
-#   -d -f (autoload dryrun force). It also registers quit_hook().
+#   -d -f (autoload dryrun force). It also set TEXTDOMAIN for i10n.
 # ------------------------------------------------------------------------------
 
-CEN_CMDBASE=
-CEN_CMDDATA=
+CEN_CMDBASE=                            # path of mini-bash-lib source
+CEN_CMDDATA=                            # scratch, proxy file path
 CEN_CMDCURR=1
 CEN_NAME="${BASH_ARGV0##*/}"
 while [ $# -ge "$CEN_CMDCURR" ] ; do    # parse arguments ...
@@ -50,17 +51,20 @@ else
 fi &>/dev/null
 CEN_CMDBASE="${CEN_CMDBASE%/*}"
 
-if [ "$CEN_FEATURE_N" != 1 ] ; then     # try centauri-bash-lib
+# try centauri-bash-lib
+if [ "$CEN_FEATURE_N" != 1 ] ; then
     CEN_CMDDATA=$(type -p '_centauri_bash_lib')
     CEN_CMDDATA="${CEN_CMDDATA%/*}/_centauri_bash_lib"
-    [ -f "$CEN_CMDDATA" ] || CEN_FEATURE_N=1
+   # [ -f "$CEN_CMDDATA" ] || CEN_FEATURE_N=1
 fi
-if [ "$CEN_FEATURE_N" = 1 ] ; then      # try mini-bash-lib
+
+# try mini-bash-lib
+if [ "$CEN_FEATURE_N" = 1 ] || [ ! -f "$CEN_CMDDATA" ] ; then
     CEN_CMDDATA="$CEN_CMDBASE/mini-bash-lib"
     [ -f "$CEN_CMDDATA" ] || return 127
     # set TEXTDOMAIN to mini library
     if [ -n "$CEN_FEATURE_T" ] ; then
-        TEXTDOMAIN='mini-bash-lib' ; TEXTDOMAINDIR="${CEN_CMDBASE%/*/*}/shared/locale"
+        TEXTDOMAIN='mini-bash-lib' ; TEXTDOMAINDIR="${CEN_CMDBASE%/*/*}/share/locale"
     fi
 fi
 
@@ -70,9 +74,8 @@ source "$CEN_CMDDATA" -a -d -f "$@"
 
 # set TEXTDOMAIN back to source
 if [ -n "$CEN_FEATURE_T" ] ; then
-    TEXTDOMAIN="$CEN_NAME" ; TEXTDOMAINDIR="${CEN_CMDBASE%/*/*}/shared/locale"
+    TEXTDOMAIN="$CEN_NAME" ; TEXTDOMAINDIR="${CEN_CMDBASE%/*/*}/share/locale"
 fi
-echo $TEXTDOMAINDIR
 :
 
 # end

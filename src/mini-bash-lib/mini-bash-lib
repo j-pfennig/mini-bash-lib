@@ -2,77 +2,176 @@
 # ------------------------------------------------------------------------------
 # mini-bash-lib         for bash 5.x
 # ------------------------------------------------------------------------------
-
-# This script can be used in three different ways:
-#
-#   1.  Stand alone:    implement your code in run() options() and usage()
-#
-#       run() {
-#           # your code (stand-alone case), 'main "$@" ; quit' is implied
-#       }
-#       ... content of this file ...
-#
-#   2.  Sourced:        source it from another script file
-#
-#       run() {
-#           # your code (stand-alone case), 'main "$@" ; quit' is implied
-#       }
-#       source "<this file>"
-#
-#   3.  via Proxy:      like 2. but the '_mini_bash_lib' does the sourcing
-#
-#       PATH+=":${0%/*}" . _mini_bash_lib - 'x.yy' || exit 2
-#       run() {
-#           ...
-#       }
-#       main "$@" ; quit
+## This script can be used in three different ways:
+##
+##   1.  Stand alone:    implement your code in run() options() and usage()
+##
+##       run() {
+##           # your code (stand-alone case), 'main "$@" ; quit' is implied
+##       }
+##       ... content of this file ...
+##
+##   2.  Sourced:        source it from another script file
+##
+##       run() {
+##           # your code (stand-alone case), 'main "$@" ; quit' is implied
+##       }
+##       source "<this file>"
+##
+##   3.  via Proxy:      like 2. but the '_mini_bash_lib' does the sourcing
+##
+##       PATH+=":${0%/*}" . _mini_bash_lib - 'x.yy' || exit 2
+##       run() {
+##           ...
+##       }
+##       main "$@" ; quit
 
 # ------------------------------------------------------------------------------
 # The following text is formatted for: centaurihelp -U <file>
 # ------------------------------------------------------------------------------
 
 # ------------------------------------------------------------------------------
+# content + Documentation
+#
+#+About: This is text documents mini-bash-lib, a framework for writing bash scripts.
+#
+#+      A script is usually a single file that does embed the library code or loads
+#       the library at start-up time. The basic mini-bash-lib itself is contained in
+#       a single file. The size is about 10 kByte in 400 lines of code.
+#
+# Content:
+#,      - [[mini°bash°lib]]   Introduction and list of implemented functions
+#,      - [[Coexistence]]     Compatibility with centauri-bash-lib
+#,      - [[Framework]]       Understanding the framework functions
+#,      - [[Proxy]]           Using the proxy for shared library usage
+#,      - [[Gettext]]         Internationalization using GNU gettext
+#
+#+Functions: Each script activates the framework by calling '''**main** "$@"'''
+#       passing all command line arguments:
+#
+#,      - [[main]]        [<opt>...] [---] [<arg>...]
+#
+#+      The script code optionally implements some or all of the following functions
+#       that get called by the framework:
+#
+#,      - [[options]]     <opt> <arg>      # command line option parser
+#,      - [[quit_hook]]                    # cleaning up before termination
+#,      - [[run]]         <arg>...         # run the script's payload
+#,      - [[usage]]                        # implement option --help
+# ------------------------------------------------------------------------------
+
+# ------------------------------------------------------------------------------
 # mini bash lib + A very minimal sub-set of centauri-bash-library
 #
-# Purpose: The mini-bash-lib has practical and educational use. Please always remember:
+#+Purpose: The mini-bash-lib is of practical and educational use. Please note
+#       the following limitations:
 #
-#, - it implements only something around 1% of _centauri_bash_lib
-#, - it can be used simplify scripting and to support debugging
-#, - it demonstrates some of the main design goals of _centauri_bash_lib:
-#,     °    application framework: here only some option parsing, run() and usage()
-#,     °    debug support: options -t|--trace and -d|--dryrun, trace()
-#, - error handling: [[error()]], [[fatal()]], [[quit()]], [[system()]] to run commands
-#, - simplify programming: folder(), splitjoin(), symlink(), confirm()
-#, - reasonable console output: message(), warning(), trace()
+#,      - it implements only something around 1% of centauri-bash-lib
+#,      - it is monolithic, e.g. there is no dynamic module loading
+#,      - it does not make use of loadable bash extensions
+#
+#+      Besides of this, it still provides the following functionality:
+#
+#,      - it can be used simplify scripting and to support debugging
+#,      - it demonstrates some of the main design goals of centauri-bash-lib:
+#,      ° framework: here only some option parsing, [[run]]() and [[usage]]()
+#,      ° debug support: options -t|--trace and -d|--dryrun, [[trace()]]
+#,      - error handling: [[error()]], [[fatal()]], [[quit()]], [[system()]] to run commands
+#,      - simplify programming: [[folder()]], [[splitjoin()]], [[symlink()]], [[confirm()]]
+#,      - reasonable console output: [[message()]], [[warning()]], [[trace()]]
 #
 # Content: The following functions and options are implemented:
 #
-#       [[confirm]]     [-a|-i] [-n|-y] [-p <what>] [--] <text>...
+##       [[confirm]]      [-a|-i] [-d <dflt>] [-f] [-n|-y] [-p -|<what>]
+##       °               [-s <vnam>] [-u] [--] <text>...
+#       [[confirm]]     [-a|-i] [-d <dflt>] [-f] [-n|-y] [-p -|<what>] [-s <vnam>] [-u] [--] <text>...
 #       [[copy]]        [-f|-q] [-r] [-a] [-u] [--] <arg>...
 #       [[create]]      [-r] [-t] [-c] [-v <vnam>] [--] <path>|-
 #       [[dryrun]]      [-r]
-#       [[embed]]       [-a|-s <vnam>] [-r] [--] <tool> <arg>...
-#       [[error]]       -i] [-m|-p] [-q|-t] [--] <text>...
+#       [[embed]]       [-a|-s <vnam>] [-e|-f|-q|-w] [-p] [-r] [-t] [--] <tool> <arg>...
+#       [[error]]       [-i] [-m|-p] [-q|-t] [--] <text>...
 #       [[fatal]]       [-m|-p] [--] <text>...
 #       [[folder]]      [-c] [-m] [-p] [-f|-q] [--] <path>
-#       [[main]]        [<opt>...] [---] [<arg>...]
-#       [[message]]     [-a|-i] [-m|-p] [--] <text>...          # also: -e|-f|-w -q|-t
+#       [[message]]     [-a|-i] [-c <labl>] [-m|-p] [--] <text>...
 #       [[optarg]]      <name> <vnam>|- [-t|-f] [<valu>]
 #       [[rename]]      [-f|-q] [-r] [--] <arg>...
 #       [[remove]]      [-f|-q] [-r] [-d] [-o] [--] <arg>...
 #       [[splitjoin]]   [-j|-s <vnam>] [-d <deli>]
 #       [[symlink]]     [-f|-q] [-r] [-n] [-r] [--] <arg>...
-#       [[system]]      [-a|-s <vnam>] [-c] [-e|-f|-q|-t|-w] [-p] [-r] [-z] [--] <tool> <arg>...
+#       [[system]]      [-a|-s <vnam>] [-c] [-d <deli>] [-e|-f|-q|-t|-w] [-p] [-r] [-z] [--] <tool> <arg>...
 #       [[tmpfile]]     [-n] [-r] [-s <vnam>]
-#       [[trace]]       [-a|-i] [-m|-p] [--] <text>...
+#       [[trace]]       [-a|-i] [-c <labl>] [-m|-p] [--] <text>...
 #       [[warning]]     [-a|-i] [-m|-p] [--] <text>...
 #       [[quit]]        [-a|-i] [-e|-t|-u] [-m|-p] [-s <code>] [--] <text>...
 #
-#+General:  The order of options is not relevant, '--' terminates the option
-#           list (if not used and the next argument starts with a '-' that
-#           argument is parsed as an option).
+#+General: The order of options is not relevant, '--' terminates the option
+#       list (if not used and the next argument starts with a '-' that
+#       argument would by parsed as an option).
+#
+#+      Function options are always a hyphen followed by a single letter.
+#       Arguments must be a separate word. The command line parser, see
+#       [[options]](), and function options are separate implementations.
+#
+#+      Intentionally unknown function options are not causing an abort
+#       and stack trace like in centauri-bash-lib, see [[coexistence]].
 # ------------------------------------------------------------------------------
 
+# ------------------------------------------------------------------------------
+# coexistence + Using mini-bash-lib script with centauri-bash-lib installed
+#
+#+Sub-set: The mini-bash-lib is a drop-in compatible sub-set of
+#       centauri-bash-lib. The mini framework supports nothing but [[main]]()
+#       [[options]]() [[run]]() and [[quit()]]. Only a core sub-set  of 20 functions
+#       is provided. Even these implemented functions have reduced functionality.
+#
+#+      Among other things centauri-bash-lib implements services, batch processing
+#       and so called action verbs. Also error checking and debugging are supported
+#       much better. The mini-bash-lib ignores unimplemented function options or
+#       bad use of options where centauri-bash-lib aborts with a function call trace.
+#
+#+Switching: Unless centauri-bash-lib where a proxy is mandatory, the mini-bash-lib
+#       can be embedded as a whole in the script or can use a proxy, see [[proxy]].
+#       When using the proxy an installed version of centauri-bash-lib gets loaded
+#       by default. The command line option "--mini" can be used to prevent loading
+#       centauri-bash-lib:
+#
+#,      --mini=0        # (default) use centauri-bash-lib if installed
+#,      --mini=1        # always use mini-bash-lib
+#
+#+Templates: The folder "/usr/share/doc/mini-bash-lib/Examples" contains two
+#       files that can be copied and used as a starting point for a new script:
+#
+#,      **shared**      # template using the proxy
+#,      **standalone**  # ... embedded mini-bash-lib
+#
+#+ Generating mini-bash-lib scripts with centauricreate
+#
+# run + The run function
+#
+# usage + Providing help
+# ------------------------------------------------------------------------------
+
+# ------------------------------------------------------------------------------
+# framework + Understanding the framework functions
+#
+#+The framework imposes a simple source structure and control flow:
+#
+# Source:   (A1) Load the proxy                         # shared version
+#           (A2) Script code
+#           (A3) Execute 'main "$@" ; quit'
+#
+#           (B1) Script code                            # embedded version
+#           (B2) Embedded library code
+#           (B3) Execute 'main "$@" ; quit'
+#
+# Control°Flow:
+#           (1) [[main]]()                  # invoke framework
+#           (2)     [[options]]()           # optional: command line parser
+#           (3) [[run]]()                   # call by [[main()]]
+#           (4)     ... payload ...         # the payload
+#           (5) [[quit()]]                  # leave framework
+#           (6)     [[quit_hook]]           # optional: custom clean-ups
+#
 # Proxy             Using a proxy to load mini-bash-lib or centauri-bash-lib
 # Embedding         Embedding mini-bash-lib in a script, packing to source
 # Framework         Application framwork: main - options - usage - run - quit
@@ -82,26 +181,143 @@
 #
 #   quit -e         # 'terminated after error'
 #   quit -t         # 'terminated'
+# ------------------------------------------------------------------------------
 
 # ------------------------------------------------------------------------------
-# coexistence + Using mini-bash-lib script with centauri-bash-library installed
+# proxy + Using the proxy to sharing the library and to support i10n
 #
-#   Option: --mini      never load _centauri-bash-lib
+#+Purpose: Instead of embedding the library source into each script, a proxy
+# can be used to locate and load the library source in the file system tree.
+# The proxy also enables coexistence with centauri-bash-lib and allows to load
+# GNU [[gettext]] translations (i10n).
 #
-# template + Generating mini-bash-lib scripts with centauricreate
+#+Call: The proxy file is **_mini_bash_lib**. It is located using **PATH** and
+# gets sourced by bash:
 #
-# run + The run function
+#       **PATH+=**":${0%/*}" **. _mini_bash_lib** <opt>... **-** <vers> **|| exit 2**
 #
-# usage + Providing help
+# Arguments:<opt>   proxy options, see below
+#           <vers>  a version string like "nn.mm"
+#
+# Options:  -f  enable the --force command line option
+#           -t  enable [[gettext]] internationalization
+#           -n  do never use centauri-bah-lib, see [[coexistence]]
+#           -y  enable --yes/--no cmd line options
+#
+# Example:  See: **/usr/share/doc/mini-bash-lib/Examples/shared**
+#
+#+Usage: The proxy code must be in then same folder as the library itself. The
+# best way to using it is symlinking the proxy from **/usr/local/bin** to the
+# installation folder. Obviously **/usr/local/bin** must be in your **PATH**:
+#
+#.      cd /usr/local/bin
+#.      ln -s /usr/share/src/mini-bash-lib/_mini_bash_lib .
+#
+#.      PATH+=:/usr/local/bin               # should be in your shell profile
+#
+#+      Alternatively any folder containing a script using the proxy can have
+# an explicit symlink to the proxy. In this case **PATH** needs no reference to
+# the folder:
+#
+#.      cd ~/my-tools                       # a private folder
+#.      ln -s /usr/share/src/mini-bash-lib/_mini_bash_lib .
+#
+#.      ~/my-tools/example                  # no need to set PATH
+#
+#+**Do not copy the proxy, use symbolic links only**. The proxy runs **realpath**
+# to locate mini-bash-lib via the symbolic link.
+#
+#+The processing the --mini command line option is part of the proxy. This
+# option is otherwise ignored by mini-bash-lib and centauri-bash-lib.
+#
+#+When using mini-bash-lib (see [[coexistence]]), all proxy options and arguments
+# are passed to _centauri_bash_lib (e.g. the proxy of centauri-bash-lib).
+# ------------------------------------------------------------------------------
+
+# ------------------------------------------------------------------------------
+# gettext + Internationalization using GNU gettext
+#
+#+Bla: bla bla
+#
+#+Bla: bla bla
+#
+# bla
+# ------------------------------------------------------------------------------
+
+# ------------------------------------------------------------------------------
+# main + Callback: Invoking the framework, option parsing
+#
+# command°line:
+#+The main() function is the entry point for a script's code. It parses command
+# line options (not to be confused with function options) and passed the remaining
+# call arguments to [[run]]().
+#
+#+options: The framework implements a few options by default, see below. If a
+# script implements an [[options]]() function, this gets called before the internal
+# implementation. For each command line option the options function is called once,
+# see [[optarg()]]. When all options were processed ... empty call ...
+#
+# Call:     main [<opt>...] [---] [<arg>...]
+#
+# Options:  -<char>             short option
+#           -<char><value>      short option with value (no separating space)
+#           -<char> <value>     short option followed by value argument
+#           --<name>            long option
+#           --<name>=<value>    long option with value (using "=" separator)
+#           --<name> <value>    short option followed by value argument
+#
+# Arguments:                    everything goes
+#
+# Return:                       not used, see [[quit()]]
+# ------------------------------------------------------------------------------
+
+# ------------------------------------------------------------------------------
+# options + Callback: Command Line Option Parser
+#
+#+Purpose: bla
+#
+#+Important: **DO NOT** 'exit' or quit
+# ------------------------------------------------------------------------------
+
+# ------------------------------------------------------------------------------
+# quit_hook + Callback: Cleaning up before Termination
+#
+#+Purpose: bla
+#
+#+Important: **DO NOT** 'exit' or quit
+# ------------------------------------------------------------------------------
+
+# ------------------------------------------------------------------------------
+# usage + Callback: Implement Option --help
+#
+#+Purpose: bla
+#
+#+Important: **DO NOT** 'exit' or quit
+# ------------------------------------------------------------------------------
+
+# ------------------------------------------------------------------------------
+# run + Callback: run the Payload Part of a Script
+#
+# Call:     run [<arg>...]
+#
+#+This function is a custom function that is called by [[main]]() after option
+# parsing. To make sure that [[quit()]] gets called in case that run returns,
+# always invoke the framework as:
+#
+#.      main "$@" ; quit
+#
+# The return code of run is not interpreted. Also the run is option, if not
+# present the framework calls [[quit()]] after option parsing.
 # ------------------------------------------------------------------------------
 
 # ------------------------------------------------------------------------------
 # confirm - prompt for console input
 #
-# Call:     [-a|-i] [-n|-y|-p <what>] [-d <dflt>] [-s <vnam>] [-u] [--] <text>...
+# Call:     confirm [-a|-i] [-d <dflt>] [-f] [-n|-y] [-p -|<what>] [-s <vnam>] [-u] [--] <text>...
 #
 # Options:  -a  indent automatically
 #           -d  default reply, also used with '-p .'
+#           -f  printf formatting, 1st non-options argument is format
 #           -i  always indent
 #           -n  yes/No prompt, short for: -p ' [y/N]? ' -d 'no'
 #           -p  appended to prompt text, see below for "-"|"+"|"."
@@ -111,10 +327,12 @@
 #
 # Arguments:<dflt>          final part of prompt. Example: " [OK]? "
 #           <text>          prompt message
+#           <vnam>          name of a variable to receice input
 #           <what>  -       ask for free text input
 #                   +       ask for a password (no echo)
 #                   .       append ' [<dflt>]: ' to prompt text
-#                   <text>  append ' <dflt> ' to prompt text
+#                 <any>   § append ' <any> ' to prompt text
+#           <text>          prompt text
 #
 # Return:   **true** for "yes" answer or non-empty result otherwise
 #           **false** for "no" answer or empty result
@@ -150,6 +368,26 @@
 # ------------------------------------------------------------------------------
 
 # ------------------------------------------------------------------------------
+# create - create a file, write to file or stdout
+#
+# Call:     create [-r] [-t] [-c] [-v <vnam>] [--] [<path>|-]
+#
+# Options:  -c  copy from stdin
+#           -r  ignore --dryrun
+#           -t  truncate, replace an existing file
+#           -v  get data from (array) variable
+#
+# Arguments:<path>  file path or '-' for /dev/stdout
+#           <vnam>  name of a variable
+#
+# Return:   **true** on success  -or-  **false** otherwise
+#
+#+Without option -t this function does nothing and returns **false** if <path>
+# already exists. This function does not try by itself to append to an existing
+# file, but will do so for a file already opened in append mode.
+# ------------------------------------------------------------------------------
+
+# ------------------------------------------------------------------------------
 # dryrun - test for option --dryrun, generate trace message
 #
 # Call:     dryrun [-r] [--] <text>...
@@ -172,11 +410,17 @@
 # ------------------------------------------------------------------------------
 # embed - run another script like a sub-routine
 #
-# Call:     embed [-a|-s <vnam>] [-r] [--] <tool> <arg>...
+# Call:     embed [-a|-s <vnam>] [-e|-f|-q|-w] [-p] [-r] [-t] [--] <tool> <arg>...
 #
 # Options:  -a  return output as array of lines in <vnam>
+#           -e  output an error message on error
+#           -f  make errors fatal
+#           -p  pretty print error/warning output
+#           -q  redirect **stdout** and **stderr** to "/dev/null"
 #           -r  ignore --dryrun
 #           -s  return output as a single line in <vnam>
+#           -t  silent test, return **false** for previous error
+#           -w  output a warning on error
 #
 # Arguments:<tool>  a mini-bash-lib or centauri-bash-lib script to be run
 #           <arg>   options or arguments passed to the script
@@ -196,7 +440,7 @@
 #           -i  always indent
 #           -m  multi-line output (one line per <text> argument)
 #           -p  printf formatting (1st <text> arg. is format)
-#           -q  call [[quit -q]] if a previous error has occurred
+#           -q  call "quit -q" if a previous error has occurred
 #           -t  silent test, return **false** for previous error
 #
 # Arguments:<text>  Any text to be output
@@ -244,33 +488,18 @@
 # ------------------------------------------------------------------------------
 
 # ------------------------------------------------------------------------------
-# main - run the payload part of a script
-#
-# Call:     main [<opt>...] [---] [<arg>...]
-#
-# Options:  -<char>             short option
-#           -<char><value>      short option with value (no separating space)
-#           -<char> <value>     short option followed by value argument
-#           --<name>            long option
-#           --<name>=<value>    long option with value (using "=" separator)
-#           --<name> <value>    short option followed by value argument
-#
-# Arguments:                    everything goes
-#
-# Return:                       not used, see [[quit()]]
-# ------------------------------------------------------------------------------
-
-# ------------------------------------------------------------------------------
 # message - Output text to stderr
 #
-# Call:     message [-a|-i] [-m|-p] [--] <text>...
+# Call:     message [-a|-i] [-c <labl>] [-m|-p] [--] <text>...
 #
 # Options:  -a  auto-indent (e.g. do not repeat to script name)
+#           -c  start with an 18 char fixed size label field
 #           -i  always indent
 #           -m  multi-line output (one line per <text> argument)
 #           -p  printf formatting (1st <text> arg. is format)
 #
-# Arguments:<text>  Any text to be output
+# Arguments:<labl>  label field text (field width is 18 chars)
+#           <text>  Any text to be output
 #
 # Return:   **true** on success
 # ------------------------------------------------------------------------------
@@ -329,12 +558,13 @@
 # ------------------------------------------------------------------------------
 
 # ------------------------------------------------------------------------------
-# splitjoin split text data into array or join data to string
+# splitjoin - split text data into array or join data to string
 #
-# Call:      splitjoin -j <vnam> [-d <deli>] [--] <text>...     # join to string
+# Call:      splitjoin -j <vstr> [-d <deli>] [--] <text>...     # join to string
 #            splitjoin -s <varr> [-d <deli>] [--] <text>...     # split to array
 #
-# Options:  -j  join to a single string, default delimiter is '\t' (tab)
+# Options:  -d  IFS delimiters (default -j: '\t' -s: '\t\n')
+#           -j  join to a single string, default delimiter is '\t' (tab)
 #           -s  split to array, default delimiter is '\n\-t' (nl and tab)
 #
 # Arguments:<deli>  list of single char field delimiters (processed via printf)
@@ -367,32 +597,35 @@
 # ------------------------------------------------------------------------------
 # system - Run an external (or builtin) command
 #
-# Call:     system [-a|-s <vnam>] [-e|-f|-q|-w] [-p] [-r] [-z] [--] <tool> <arg>...
+# Call:     system [-a|-s <vnam>] [-d <deli>] [-e|-f|-q|-w] [-p] [-r] [-t] [-z] [--] <tool> <arg>...
 #           system -c [-e|-f|-q|-w] [--] <tool>...
 #
 # Options:  -a  capture output to array
 #           -c  check if arguments are executable commands
+#           -d  set IFS word separators or set line mode
 #           -e  output an error message on error
 #           -f  make errors fatal
 #           -p  pretty print error/warning output
 #           -q  redirect **stdout** and **stderr** to "/dev/null"
 #           -r  ignore --dryrun
 #           -s  capture output to string
+#           -t  do not run after previous error
 #           -w  output a warning on error
 #           -z  capture **stderr** only. do not interfere with **stdout**
 #
 # Arguments:<tool>  external or builtin command to use
 #           <arg>   arguemnts for <tool>
+#           <deli>  ...
 #           <vnam>  name of a string or array variable
 #
-# Notes:    mini-bash-lib not explicitly support bash loadables. So system makes
+#+Notes:    mini-bash-lib not explicitly support bash loadables. So system makes
 #           no difference beween builtin are external commands.
 #
-#           system cannot by used recursively, so better don't call functions.
+#+          system cannot by used recursively, so better don't call functions.
 #
-#           While centauri-bash-lib uses "$(...)" to run a command mini-bash-lib
-#           redirects to a temporary file (like [[sysrun()]] does. This avoids a
-#           sub-shell but prevents recursive use.
+#+          While centauri-bash-lib uses "$(...)" to run a command mini-bash-lib
+#           redirects to a temporary file (like **sysrun** of centaur-bash-lib does).
+#           This avoids the overhead of a sub-shell but prevents recursive use.
 #
 # Return:   **true** on success  -or-  **false** otherwise
 # ------------------------------------------------------------------------------
@@ -410,21 +643,23 @@
 #
 # Return:   **true** on success  -or-  **false** otherwise
 #
-# At program exit the [[quit()]] function recursively deletes all temporary
+#+At program exit the [[quit()]] function recursively deletes all temporary
 # objects that have a path obtained from tmpfile().
 # ------------------------------------------------------------------------------
 
 # ------------------------------------------------------------------------------
 # trace - Write a trace message to stderr output
 #
-# Call:     trace [-a|-i] [-m|-p] [--] <text>...
+# Call:     trace [-a|-i] [-c <labl>] [-m|-p] [--] <text>...
 #
 # Options:  -a  auto-indent (e.g. do not print the script name)
+#           -c  start with an 18 char fixed size label field
 #           -i  always indent
 #           -m  multi-line output (one line per <text> argument)
 #           -p  printf formatting (1st <text> arg. is format)
 #
-# Arguments:<text>  Any text to be output
+# Arguments:<labl>  label field text (field width is 18 chars)
+#           <text>  Any text to be output
 #
 # Return:   **true** on success
 # ------------------------------------------------------------------------------
@@ -445,20 +680,25 @@
 # ------------------------------------------------------------------------------
 
 # ------------------------------------------------------------------------------
-# quit - terminate application, remove temporary file
+# quit - terminate application, remove temporary files
 #
 # Call:     quit [-a|-i] [-e] [-m|-p] [-s <code>] [-t] [--] <text>...
 #
 # Options:  -a  auto-indent (e.g. do not print the script name)
+#           -e
 #           -i  always indent
 #           -m  multi-line output (one line per <text> argument)
 #           -p  printf formatting (1st <text> arg. is format)
+#           -s
 #           -t
 #
-# Arguments:...
+# Arguments:<code>  application exit code
+#           <text>  Any text to be output
 #
 # Return:   ...
 # ------------------------------------------------------------------------------
+
+if [ -z "$CEN_HOOK_MESSAGE" ] ; then    # skip implementation loading
 
 # ------------------------------------------------------------------------------
 # mini-bash-lib         implementation
@@ -467,10 +707,15 @@
 {
 # shellcheck disable=SC2034
 {
+    CEN_STDOUT=41
+    CEN_STDERR=42
+    eval exec "$CEN_STDOUT>&1" "$CEN_STDERR>&2"
+
     CEN_EXIT=0              # exit code
+    CEN_HOOK_MESSAGE='message'
     CEN_HOOK_QUIT=          # called by quit()
     CEN_IDNT=               # Flag for indentation
-    CEN_MINI_VERSION='0.02'
+    CEN_MINI_VERSION='0.04'
 
     CEN_ARGS=               # option arg count  (0:=error  1:=flag only  2:has value)
     CEN_ARGOPT=             # potential option argument
@@ -496,7 +741,7 @@
 
 warning() { message -w "$@" ; }
 error()   { message -e -l "$@" ; return "$CEN_EXIT" ; }
-fatal()   { message -f -l "$@" ; }
+fatal()   { [ "$1" = '-t' ] && set -- "${@:2}" ; message -f -l "$@" ; quit ; }
 trace()   { [ "$CEN_VERB" -lt 2 ] && return 0 ; message "$@" ; }
 
 # write a message stderr: [-a|-i] [-m] [-p] [--] <text>...
@@ -514,18 +759,18 @@ message() {
               printf -v _opre '%s' "${_ugly/$_asci/$2}" # back to unicode
               shift ;;
         -e)   _opre=$"***ERROR***" ; _exit=2 ;;
-        -f)   _opre=$"***FATAL ERROR***" ; _oqui=1 ; _exit=3 ;;
+        -f)   _opre=$"***FATAL ERROR***" ; _exit=3 ;;
         -i)   _idnt="${_idnt//?/ }" ;;
         -l)   _olog=1 ;;
         -m)   _omul=1 ;;
         -p)   _opri=1 ;;
-        -q)   [ "$CEN_EXIT" = 0 ] && return 0 ; _oqui=2 ;;
+        -q)   [ "$CEN_EXIT" = 0 ] && return 0 ; _oqui=1 ;;
         -t)   [ "$CEN_EXIT" = 0 ] ; return ;;
         -w)   _opre=$"***WARNING***" ;;
         esac ; shift
     done
     [ -n "$_exit" ] && { _olog=1 ; CEN_EXIT="$_exit" ; }
-    [ "$_oqui" = 2 ] && quit -e "$@"
+    [ -n "$_oqui" ] && quit -e "$@"
     [ "$_olog" -lt 1 ] && return 0
     if [ -n "$_omul" ] ; then
         _omul="$1" ; shift
@@ -536,7 +781,7 @@ message() {
     [ -z "$_opri" ] && _mesg="$*" || printf -v _mesg "$@"
     [ -n "$_opre" ] && _mesg="$_opre $_mesg"
     echo "$_idnt" "$_mesg" >&2
-    CEN_IDNT=1 ; [ -n "$_oqui" ] && quit
+    CEN_IDNT=1
 }
 
 # ------------------------------------------------------------------------------
@@ -613,12 +858,8 @@ create() {
     done
     dryrun $_rdry 'create' "$@" && return 1
     [ "${1:--}" = '-' ] && _fout='/dev/stdout' || _fout="$1"
-    if [ "${_fout::5}" != '/dev/' ] && [ -e "$_fout" ] ; then
-       if [ -z "$_rtru" ] ; then
-           error $"Existing file:" "$_fout" ; return 1
-       elif ! [ -f "$_fout" -a -w "$_fout" ] ; then
-           remove $_rdry -- "$_fout" || return 1
-       fi
+    if [ -z "$_rtru" ] && [ "${_fout::5}" != '/dev/' ] && [ -e "$_fout" ] ; then
+        error $"Existing file:" "$_fout" ; return 1
     fi
     _cen_create_file "$_fout" || return 1
     [ -z "$_vnam" ] && return 0
@@ -652,48 +893,48 @@ dryrun() {
 
 # run another tool using --embed: -m <fake> -a|-s <vnam> <system-opts> <tool> [--] <arg>...
 embed() {
-    local _opts=('--embed' "$CEN_NAME")
-    [ -n "$CEN_OPT_DRYRUN" ] && _opts+=('--dryrun')
+    local _stat _opts=()
     while [ "${1::1}" = '-' ] ; do
         case "$1" in
         --)   shift ; break ;;
-        -m)   return 0 ;;                       # mini-bash-lib has no modules
+        -m)   return 0 ;;
         -a|-s)  _opts+=("$1" "$2") ; shift ;;
-        *)    _opts+=("$1")
+        -*)   _opts+=("$1")
         esac ; shift
     done
-    local _prog="$1" _stat ; shift
-    system -r "$_prog" "${_opts[@]}" -- "$@" ; _stat="$?"
+    _opts+=('--' "$1" '--embed='${CEN_NAME@Q}) ; shift
+    [ -n "$CEN_OPT_DRYRUN" ] && _opts+=('--dryrun')
+    system -r "${_opts[@]}" "$@" ; _stat="$?"
     [ "$_stat" = 3 ] && quit -s 3 ; return "$_stat"
 }
 
 # create dir, set current dir: [-f|-q] [-m] [-c|-p] [--] <path>
 folder() {
-    local _ochg _omak _oerr='error'
+    local _ochg _omak _oerr='error' _oopt='-e -p'
     while [ "${1::1}" = '-' ] ; do
         case "$1" in
         --) shift ; break ;;
         -c) _ochg='cd' ;;
-        -f) _oerr='fatal' ;;
+        -f) _oerr='fatal' ; _oopt='-f -p' ;;
         -m) _omak=1 ;;
         -p) _ochg='cd -P' ;;
-        -q) _oerr=':' ;;
+        -q) _oerr=':' ; _oopt='-q' ;;
         esac ; shift
     done
     if [ ! -d "$1" ] ; then
         if [ -n "$_omak" ] ; then
-            system -e -p -- mkdir -p "$1" || return 1
+            system $_oopt -- mkdir -p "$1" || return 1
         else
-            $_oerr $"Is not a folder:" "$1" || return 1
+            $_oerr $"Not a folder:" "$1" ; return 1
         fi
     fi
     [ -z "$_ochg" ] && return 0
     # using 'system eval cd ..' to simplify error handling
-    system -r -e -- eval "$_ochg" "$1" || return 1
+    system -r $_oopt -- eval "$_ochg" "$1" || return 1
     trace -a -c $"Current folder" "$PWD" ; return 0
 }
 
-# handle word split or join: -j|-s <vnam>  [--] <data>...
+# handle word split or join: -j|-s <vnam> -d <deli> [--] <data>...
 # shellcheck disable=SC2206
 # shellcheck disable=SC2059
 splitjoin() {
@@ -717,15 +958,15 @@ splitjoin() {
 }
 
 # some simple file-system commands:
-#   copy    [-f|-q] [-r] [-a] [-u] [--] <arg>...
-#   rename  [-f|-q] [-r]           [--] <arg>...
-#   remove  [-f|-q] [-r] [-d] [-o] [--] <arg>...
-#   symlink [-f|-q] [-r] [-n] [-r] [--] <arg>...
+##   copy    [-f|-q] [-r] [-a] [-u] [--] <arg>...
+##   rename  [-f|-q] [-r]           [--] <arg>...
+##   remove  [-f|-q] [-r] [-d] [-o] [--] <arg>...
+##   symlink [-f|-q] [-r] [-n] [-r] [--] <arg>...
 
 copy() { _cen_simple_cmd 'cp' "$@" ; }        # -a -u
 rename() { _cen_simple_cmd 'mv' "$@" ; }
-remove() { _cen_simple_cmd 'rm' "$@" ; }      # -d -o
-symlink() { _cen_simple_cmd 'ln -s' "$@" ; }  # -n -r
+remove() { _cen_simple_cmd 'rm' -F "$@" ; }   # -d -o
+symlink() { _cen_simple_cmd 'ln' -S "$@" ; }  # -n -r
 
 _cen_simple_cmd() {
     local _oerr='-e -p' _orun _args=("$1") ; shift
@@ -735,9 +976,11 @@ _cen_simple_cmd() {
         -ac)    _args+=('-a') ;;        # cp -a
         -uc)    _args+=('-u') ;;        # cp -u
         -dr)    _args+=('-r') ;;        # rm -r
+        -Fr)    _args+=('-f') ;;        # rm -f
         -or)    _args+=('--one-file-system') ;;
-        -nl)    _args+=('-f' '-s') ;;   # ln -f
-        -ll)    _args+=('-r') ;;        # ln -r
+        -nl)    _args+=('-f') ;;        # ln -f
+        -rl)    _args+=('-r') ;;        # ln -r
+        -Sl)    _args+=('-s') ;;        # ln -s
         -f?)    _oerr='-f -p' ;;
         -q?)    _oerr='-q' ;;
         -r?)    _orun=1 ;;
@@ -749,7 +992,7 @@ _cen_simple_cmd() {
 
 # run a command: <opt>... [--] <cmd> <arg>...
 system() {
-    local _stat _mesg=':' _rdry _fchk _onam _ored _otyp
+    local _stat _rdry _fchk _onam _ored _otyp _odel _oerr _oqui=':'
     # _ored (output redir)  '': none  0: /dev/null   1: stdout+err  2: stderr only
     # _otyp (output dest)   '': none  0: error only  1: to string   2: to array
     while [ "${1::1}" = '-' ] ; do
@@ -757,14 +1000,15 @@ system() {
         --)   shift ; break ;;
         -a)   shift ; _onam="$1" ; _ored=1 ; _otyp=2 ;;
         -c)   _fchk=1 ;;
-        -e)   _mesg='error' ;;
-        -f)   _mesg='fatal' ;;
+        -d)   shift ; _odel="$1" ;;
+        -e)   _oerr='-e -l' ;;
+        -f)   _oerr='-f -l' ; _oqui='quit' ;;
         -p)   _ored=1 ; [ -z "$_otyp" ] && _otyp=0 ;;
         -q)   _ored=0 ;;
         -r)   _rdry='-r' ;;
         -s)   shift ; _onam="$1" ; _ored=1 ; _otyp=1 ;;
         -t)   [ "$CEN_EXIT" = 0 ] || return 1 ;;
-        -w)   _mesg='warning' ;;
+        -w)   _oerr='-w' ;;
         -z)   _ored=2 ; [ -z "$_otyp" ] && _otyp=0 ;;
         esac ; shift
     done
@@ -772,7 +1016,8 @@ system() {
         _stat=0
         for _fchk in "$@" ; do
             type -t "$_fchk" &>/dev/null && continue
-            $_mesg -- $"Command not found:" "$_fchk" ; _stat=127
+            message $_oerr $"Command not found:" "$_fchk" ; _stat=127
+            $_oqui
         done
         return "$_stat"
     fi
@@ -789,16 +1034,17 @@ system() {
 
     # shellcheck disable=SC2015
     [ "$_otyp" = 2 ] && local -n _vsys="$_onam" || local _vsys
-    readarray -t _vsys <"$CEN_TMP_SYSO"
+    [ -n "$_otyp" ] && readarray -t _vsys <"$CEN_TMP_SYSO"
     [ "$_otyp" = 1 ] && splitjoin -j "$_onam" -- "${_vsys[@]}"
     [ "$_stat" = 0 ] && return 0
 
-    $_mesg -p $"Execution of '%s' failed (status %s)" "$1" "$_stat"
-    [ "${_ored:-0}" != 0 ] && message -i -m "${_vsys[@]}"
+    message $_oerr -p $"Execution of '%s' failed (status %s)" "$1" "$_stat"
+    [ -n "$_otyp" ] && message -i -m "${_vsys[@]}"
+    $_oqui
     return "$_stat"
 }
 
-# create transient file: [-r] [-s <vnam>]
+# create transient file: [-n] [-r] [-s <vnam>]
 tmpfile() {
     local _vtmp='CEN_TEMPFILE' _rdry _crea=1
     local _temp="$CEN_TMP_BASE$CEN_TMP_INDX-$BASHPID"
@@ -861,13 +1107,14 @@ main() {
 
 # get option setting: <name> <vnam>|- [-t|-f] [<value>]
 optarg() {
-    local _name="${2:--}" ; [ "$_name" = '-' ] && _name="CEN_OPT_${1^^}"
+    local _name="${2:--}" _aarr="$CEN_ACTARR"
+    [ "$_name" = '-' ] && _name="CEN_OPT_${1^^}"
     case "${3:--f}" in
     -f) printf -v "$_name" '%s' "${4:-1}" ; CEN_ARGS=1 ;;
     *)  if [ -z "$CEN_ARGOPT" ] ; then
-            [ "$CEN_ACTARR" != '-' -a "${CEN_ACTARR::1}" = '-' ] &&
-                quit -e "Missing option value:" "--$1"
-            CEN_ARGS=2 ; CEN_ARGOPT="$CEN_ACTARR"
+            [ "$_aarr" != '-' ] && [ -z "$_aarr" -o "${_aarr::1}" = '-' ] &&
+                quit -e $"Missing option value:" "--$1"
+            CEN_ARGS=2 ; CEN_ARGOPT="$_aarr"
         else
             CEN_ARGS=1
         fi
@@ -905,12 +1152,25 @@ quit() {
 # command not found runs in a sub-shell, must call quit() indirectly via signal
 # ------------------------------------------------------------------------------
 command_not_found_handle() {
+    set +xeE ; exec 1>&$CEN_STDOUT 2>&$CEN_STDERR
     message -l $"***ABORT***" $"Command not found:" "$1"
-    set +xeE ; kill -42 $$              # send signal to main shell
+    kill -42 $$                         # send signal to main shell
 }
 
 # shellcheck disable=SC2172
 trap 'trap 42; quit -s 127' 42          # quit from main shell
 }
+
+# ------------------------------------------------------------------------------
+# run the application
+# ------------------------------------------------------------------------------
+    if PATH=' ' type -t run &>/dev/null ; then
+        main "$@" ; quit
+    fi
+elif [ -n "$CEN_STAGE" ] ; then
+    run "$@"                            # we got sourced
+else
+    main "$@" ; quit                    # using centauri-bash-lib
+fi
 
 # End

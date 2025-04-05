@@ -48,5 +48,6 @@ List of Examples
     pipes               # using 'system' with redirections and pipes
     confirm             # demostrates the 'confirm' function
     tester              # run library functions from the command line
+    embed               # demonstrates embed, creates doc text and viewer
 
 **End**

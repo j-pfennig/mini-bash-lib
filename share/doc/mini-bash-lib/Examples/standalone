@@ -164,12 +164,8 @@ esac;shift
 done
 dryrun $_rdry 'create' "$@"&&return 1
 [ "${1:--}" = - ]&&_fout='/dev/stdout'||_fout="$1"
-if [ "${_fout::5}" != '/dev/' ]&&[ -e "$_fout" ];then
-if [ -z "$_rtru" ];then
+if [ -z "$_rtru" ]&&[ "${_fout::5}" != '/dev/' ]&&[ -e "$_fout" ];then
 error $"Existing file:" "$_fout";return 1
-elif ! [ -f "$_fout" -a -w "$_fout" ];then
-remove $_rdry -- "$_fout"||return 1
-fi
 fi
 _cen_create_file "$_fout"||return 1
 [ -z "$_vnam" ]&&return 0
