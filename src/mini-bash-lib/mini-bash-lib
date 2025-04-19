@@ -698,11 +698,24 @@
 # Return:   ...
 # ------------------------------------------------------------------------------
 
-if [ -z "$CEN_HOOK_MESSAGE" ] ; then    # skip implementation loading
+# ------------------------------------------------------------------------------
+# usagecat - copy usage text to stdout
+#
+# Call:     usagecat [-l]
+#
+# Options:  -l  literal output
+#
+#+Note:     This implementation only changes the "degree" character to space and
+#           fixes indentation.
+#
+# Return:   **true** on success
+# ------------------------------------------------------------------------------
 
 # ------------------------------------------------------------------------------
 # mini-bash-lib         implementation
 # ------------------------------------------------------------------------------
+if [ -z "$CEN_HOOK_MESSAGE" ] ; then    # centauri-bash-lib not loaded ...
+
 # shellcheck disable=SC2317
 {
 # shellcheck disable=SC2034
@@ -715,7 +728,8 @@ if [ -z "$CEN_HOOK_MESSAGE" ] ; then    # skip implementation loading
     CEN_HOOK_MESSAGE='message'
     CEN_HOOK_QUIT=          # called by quit()
     CEN_IDNT=               # Flag for indentation
-    CEN_MINI_VERSION='0.04'
+    CEN_MINI_VERSION='0.05'
+    : ${CEN_VERSION:=$CEN_MINI_VERSION}
 
     CEN_ARGS=               # option arg count  (0:=error  1:=flag only  2:has value)
     CEN_ARGOPT=             # potential option argument
@@ -755,7 +769,7 @@ message() {
         -c)   # printf formatting is not unicode aware ...
               local _asci _ugly
               _asci="${2//[[:alpha:]]/.}"               # this is unicode aware
-              printf -v _ugly "%-18s:" "$_asci"         # get correct padding
+              printf -v _ugly $"%-16s:" "$_asci"        # get correct padding
               printf -v _opre '%s' "${_ugly/$_asci/$2}" # back to unicode
               shift ;;
         -e)   _opre=$"***ERROR***" ; _exit=2 ;;
@@ -856,11 +870,11 @@ create() {
         -v)   shift ; _vnam="$1"
         esac ; shift
     done
-    dryrun $_rdry 'create' "$@" && return 1
     [ "${1:--}" = '-' ] && _fout='/dev/stdout' || _fout="$1"
     if [ -z "$_rtru" ] && [ "${_fout::5}" != '/dev/' ] && [ -e "$_fout" ] ; then
-        error $"Existing file:" "$_fout" ; return 1
+        trace -c $"Existing file" "$_fout" ; return 0
     fi
+    dryrun $_rdry $"Create file" "$@" && return 1
     _cen_create_file "$_fout" || return 1
     [ -z "$_vnam" ] && return 0
     if [ "$_vnam" = '-' ] ; then
@@ -902,7 +916,7 @@ embed() {
         -*)   _opts+=("$1")
         esac ; shift
     done
-    _opts+=('--' "$1" '--embed='${CEN_NAME@Q}) ; shift
+    _opts+=('--' "$1" '--embed' "$CEN_NAME") ; shift
     [ -n "$CEN_OPT_DRYRUN" ] && _opts+=('--dryrun')
     system -r "${_opts[@]}" "$@" ; _stat="$?"
     [ "$_stat" = 3 ] && quit -s 3 ; return "$_stat"
@@ -992,7 +1006,7 @@ _cen_simple_cmd() {
 
 # run a command: <opt>... [--] <cmd> <arg>...
 system() {
-    local _stat _rdry _fchk _onam _ored _otyp _odel _oerr _oqui=':'
+    local _stat _rdry _fchk _olou _onam _ored _otyp _odel _oerr=':' _oqui=':'
     # _ored (output redir)  '': none  0: /dev/null   1: stdout+err  2: stderr only
     # _otyp (output dest)   '': none  0: error only  1: to string   2: to array
     while [ "${1::1}" = '-' ] ; do
@@ -1001,14 +1015,14 @@ system() {
         -a)   shift ; _onam="$1" ; _ored=1 ; _otyp=2 ;;
         -c)   _fchk=1 ;;
         -d)   shift ; _odel="$1" ;;
-        -e)   _oerr='-e -l' ;;
-        -f)   _oerr='-f -l' ; _oqui='quit' ;;
+        -e)   _oerr='error' ; _olou='-l' ;;
+        -f)   _oerr='message -f -l' ; _olou='-l' ; _oqui='quit' ;;
         -p)   _ored=1 ; [ -z "$_otyp" ] && _otyp=0 ;;
         -q)   _ored=0 ;;
         -r)   _rdry='-r' ;;
         -s)   shift ; _onam="$1" ; _ored=1 ; _otyp=1 ;;
         -t)   [ "$CEN_EXIT" = 0 ] || return 1 ;;
-        -w)   _oerr='-w' ;;
+        -w)   _oerr='warning' ;;
         -z)   _ored=2 ; [ -z "$_otyp" ] && _otyp=0 ;;
         esac ; shift
     done
@@ -1016,8 +1030,7 @@ system() {
         _stat=0
         for _fchk in "$@" ; do
             type -t "$_fchk" &>/dev/null && continue
-            message $_oerr $"Command not found:" "$_fchk" ; _stat=127
-            $_oqui
+            $_oerr -p $"Command '%s' not found" "$_fchk" ; _stat=127 ; $_oqui
         done
         return "$_stat"
     fi
@@ -1037,11 +1050,9 @@ system() {
     [ -n "$_otyp" ] && readarray -t _vsys <"$CEN_TMP_SYSO"
     [ "$_otyp" = 1 ] && splitjoin -j "$_onam" -- "${_vsys[@]}"
     [ "$_stat" = 0 ] && return 0
-
-    message $_oerr -p $"Execution of '%s' failed (status %s)" "$1" "$_stat"
-    [ -n "$_otyp" ] && message -i -m "${_vsys[@]}"
-    $_oqui
-    return "$_stat"
+    CEN_IDNT= ; $_oerr -p $"Running '%s' failed (status %s)" "$1" "$_stat"
+    [ -n "$_otyp" ] && message -a -m $_olou -- "${_vsys[@]}"
+    $_oqui ; return "$_stat"
 }
 
 # create transient file: [-n] [-r] [-s <vnam>]
@@ -1145,7 +1156,21 @@ quit() {
     fi
     [ -n "$*" ] && message "${_opts[@]}" "$@"
     [ "$CEN_TMP_INDX" != 0 -a -n "$CEN_TMP_BASE" ] && system -q -r -- rm -f "$CEN_TMP_BASE"*
-    trace -a "quit STATUS=$CEN_EXIT" ; exit "$CEN_EXIT"
+    trace -a -c $"Script exits" "STATUS=$CEN_EXIT" ; exit "$CEN_EXIT"
+}
+
+# copy usage message to stdout: [-l]
+usagecat() {
+    local _larr _labl _line ; readarray -t -u 0 _larr
+    for _line in "${_larr[@]}" ; do
+        [ "$1" = '-l' ] && { printf '%s\n' "$_line" ; continue ; }
+        case "$_line" in
+        [a-zA-z]*:*) _labl="${_line%%:*}:" ; _line="${_line#*:}" ;;
+        *) _labl= ;;
+        esac
+        _line="${_line#"${_line%%[![:space:]]*}"}"
+        printf '%-11s%s\n' "$_labl" "${_line//°/ }"
+    done
 }
 
 # ------------------------------------------------------------------------------
@@ -1164,9 +1189,11 @@ trap 'trap 42; quit -s 127' 42          # quit from main shell
 # ------------------------------------------------------------------------------
 # run the application
 # ------------------------------------------------------------------------------
+# mini-bash-lib ...
     if PATH=' ' type -t run &>/dev/null ; then
         main "$@" ; quit
     fi
+# centauri-bash-lib ...
 elif [ -n "$CEN_STAGE" ] ; then
     run "$@"                            # we got sourced
 else

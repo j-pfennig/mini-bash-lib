@@ -1,9 +1,9 @@
 #!/usr/bin/bash
-CEN_LEGAL="Copyright Dr. J. Pfennig (c) 2007-2024; BSD License"
+CEN_LEGAL="Copyright Dr. J. Pfennig (c) 2007-2025; BSD License"
 CEN_TITLE="Tool to generate gnu gettxt-tools internationalization"
 
 # use proxy to load mini-bash-lib or centauri-bash-lib (if installed)
-PATH="${0%/*}/../../src/mini-bash-lib:$PATH" . _mini_bash_lib -t - '0.01' || exit 2
+PATH="${0%/*}" . _mini_bash_lib -t - '0.02' || exit 2
 
 # declare global variables ...
 
@@ -132,7 +132,7 @@ options() {
 # Usage info
 # ------------------------------------------------------------------------------
 usage() {
-    create -c <<!EOF
+    usagecat <<!EOF
 Usage:     $CEN_NAME [-d|-h] [-q|-v] -B <base> [--] <what> <arg>
 
            $CEN_TITLE.
@@ -159,37 +159,39 @@ Remarks:   Use the $ prefix like $"..." to flag translatable strings in source
            passed. Also your source/deployment file system tree must look as it
            is shown below to make it work. Example for 'src/local/your-script':
 
-            $CEN_NAME lang es                  # add Spanish to languages
-            $CEN_NAME dump your-script         # create/update l10n source
-            editor local/es/your-script.po  # edit translations
-            $CEN_NAME build your-script        # create message catalogues
+           °   $CEN_NAME lang es                  # add Spanish to languages
+           °   $CEN_NAME dump your-script         # create/update l10n source
+           °   editor local/es/your-script.po  # edit translations
+           °   $CEN_NAME build your-script        # create message catalogues
 
-            .
-            ├── bin
-            │   └── _mini_bash_lib -> ../src/mini-bash-lib/_mini_bash_lib
-            ├── share
-            │   └── locale
-            │       ├── de
-            │       │   ├── LC_MESSAGES
-            │       │   │   ├── mini10.mo
-            │       │   │   ├── mini-bash-lib.mo
-            │       │   │   └── your-script.mo
-            │       │   ├── mini10.po               [*] not to be deployed
-            │       │   ├── mini-bash-lib.po        [*] ...
-            │       │   └── your-script.po          [*] ...
-            │       └── mini10
-            └── src
-                ├── mini-bash-lib
-                │   ├── _mini_bash_lib
-                │   └── mini-bash-lib
-                └── scripts                         [*] folder for scripts
-                    └── your-script
+           This is the folder structure used with i10n:
 
-            I10n for stand-alone scripts makes little sense. GNU gettxt wants
-            a 'locale/<lang>/LC_MESSAGES/<name>.mo' file. The 'centauribuilder'
-            tool of 'centauri-bash-lib' can embed mo files into a script, but
-            has to create the file tree in a temporary folder at run-time. This
-            is beyond the scope of 'mini-bash-lib'.
+           °   .
+           °   ├── bin
+           °   │   └── _mini_bash_lib -> ../src/mini-bash-lib/_mini_bash_lib
+           °   ├── share
+           °   │   └── locale
+           °   │       ├── de
+           °   │       │   ├── LC_MESSAGES
+           °   │       │   │   ├── mini10.mo
+           °   │       │   │   ├── mini-bash-lib.mo
+           °   │       │   │   └── your-script.mo
+           °   │       │   ├── mini10.po               [*] not to be deployed
+           °   │       │   ├── mini-bash-lib.po        [*] ...
+           °   │       │   └── your-script.po          [*] ...
+           °   │       └── mini10
+           °   └── src
+           °       ├── mini-bash-lib
+           °       │   ├── _mini_bash_lib
+           °       │   └── mini-bash-lib
+           °       └── scripts                         [*] folder for scripts
+           °           └── your-script
+
+           I10n for stand-alone scripts makes little sense. GNU gettxt wants
+           a 'locale/<lang>/LC_MESSAGES/<name>.mo' file. The 'centauribuilder'
+           tool of 'centauri-bash-lib' can embed mo files into a script, but
+           has to create the file tree in a temporary folder at run-time. This
+           is beyond the scope of 'mini-bash-lib'.
 
 !EOF
 }

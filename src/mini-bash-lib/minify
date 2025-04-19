@@ -17,16 +17,73 @@ CEN_OPT_WORLD=          # see --world
 
 DAT_FOUT=               # output file path
 
+DAT_HELLO=(
+    ''
+    '# declare global variables ...'
+    ''
+    'CEN_OPT_EXTRA=                   # see --extra'
+    ''
+    '# ------------------------------------------------------------------------------'
+    '# Payload'
+    '# ------------------------------------------------------------------------------'
+    'run() {'
+    '    [ $# = 0 ] && set -- "Hello World!"'
+    '    message -- "$@"'
+    '}'
+    ''
+    'options() {'
+    '    case "$1" in'
+    '        -X|--extra)     optarg 'extra' -     -f ;;'
+    '    esac'
+    '}'
+    ''
+    'usage() {'
+    '    usagecat <<!EOF'
+    'Usage:     $CEN_NAME [-d|-h] [-v|-q] [---] <arg>...'
+    ''
+    '           $CEN_TITLE.'
+    ''
+    'Options:   -d --dryrun          show what would be done, make no changes'
+    '           -h --help            show this text'
+    '           -q --quiet           report errors only'
+    '           -v --verbose         be verbose'
+    ''
+    '           -X --extra           demo option'
+    ''
+    'Arguments: <arg>                Echoed to output'
+    ''
+    '!EOF'
+    '}'
+    ''
+)
+
 # ------------------------------------------------------------------------------
 # Payload
 # ------------------------------------------------------------------------------
-run() {
-    # need one argument - show usage info and quit
-    [ $# = 1 ] || { usage ; quit -s 1 ; }
+run_world() {
+    local outp=(
+        "#!$BASH"
+        'CEN_LEGAL="Copyright <anonymous> (c) 2025; <unknown> License"'
+        'CEN_TITLE="A hello world using mini-bash-lib"'
+        ''
+        '# use proxy to load mini-bash-lib or centauri-bash-lib (if installed)'
+        'PATH+=":${0%/*}" . _mini_bash_lib - "0.00" || exit 2'
+    )
+    outp+=("${DAT_HELLO[@]}")
+    outp+=(
+        '# ------------------------------------------------------------------------------'
+        '# Pass control to app framework'
+        '# ------------------------------------------------------------------------------'
+        'main "$@" ; quit'
+        ''
+        '# End'
+    )
+    output "$CEN_OPT_OUTPUT" "${outp[@]}"
+}
 
+run_pack() {
     # load data from input file
     local data fout file="$1"
-
     if [ "$file" = '.' ] ; then         # use library source
         [ "$CEN_FEATURE_N" = 1 ] || quit "Try again using option '--mini=1'"
         file="${CEN_CMDDATA%.p}"        # see proxy code
@@ -120,60 +177,51 @@ run() {
         outp+=("$item")
 
         # hello world
-        [ -n "$CEN_OPT_WORLD" -a "$line" = 1 ] && outp+=(
-        'CEN_LEGAL="Copyright <anonymous> (c) 2024; <unknown> License"'
-        'CEN_TITLE="A hello world using mini-bash-lib"'
-        ''
-        '# declare global variables ...'
-        ''
-        '#CEN_OPT_EXTRA=                  # see --extra'
-        ''
-        '#CEN_FEATURE_F=1                 # enable --force option'
-        ''
-        '# ------------------------------------------------------------------------------'
-        '# Payload'
-        '# ------------------------------------------------------------------------------'
-        'run() {'
-        '    [ $# = 0 ] && set -- "Hello World!"'
-        '    message -- "$@"'
-        '}'
-        ''
-        '#options() {'
-        '#    case "$1" in'
-        '#        -X|--extra)     optarg 'extra' -     -f ;;'
-        '#    esac'
-        '#}'
-        ''
-        '#usage() {'
-        '#    create -c <<!EOF'
-        '#Usage:     $CEN_NAME [-d|-h] [-v|-q] [---] <arg>...'
-        '#'
-        '#           $CEN_TITLE.'
-        '#'
-        '#Options:   -d --dryrun          show what would be done, make no changes'
-        '#           -h --help            show this text'
-        '#           -q --quiet           report errors only'
-        '#           -v --verbose         be verbose'
-        '#'
-        '#           -X --extra           demo option'
-        '#'
-        '#Arguments: <arg>                Echoed to output'
-        '#'
-        '#!EOF'
-        '#}'
-        ''
-        '# ------------------------------------------------------------------------------'
-        '# Packed mini-bash-lib'
-        '# ------------------------------------------------------------------------------'
+        [ -n "$CEN_OPT_WORLD" -a "$line" = 1 ] || continue
+        outp+=(
+            "#!$BASH"
+            'CEN_LEGAL="Copyright <anonymous> (c) 2025; <unknown> License"'
+            'CEN_TITLE="A hello world using mini-bash-lib"'
+            ''
+            "CEN_VERSION='0.00'"
+            '#CEN_FEATURE_F=1                 # enable --force option'
+        )
+        outp+=("${DAT_HELLO[@]}")
+        outp+=(
+            '# ------------------------------------------------------------------------------'
+            '# mini-bash-lib source-code: https://github.com/j-pfennig/mini-bash-lib'
+            '# ------------------------------------------------------------------------------'
+            ''
+            '### mini-bash-lib packed ###'
         )
     done
 
     # hello world main/quit and file output
-    [ -n "$CEN_OPT_WORLD" ] && outp+=('main "$@";quit' '# End')
+    [ -n "$CEN_OPT_WORLD" ] && outp+=('### mini-bash-lib end ###')
+    output "$fout" "${outp[@]}"
+}
 
+run() {
+    # need one argument - show usage info and quit
+    [ -n "$CEN_OPT_WORLD" -a $# = 0 ] && set -- '.'
+    [ $# = 1 ] || { usage ; quit -s 1 ; }
+
+    if [ -n "$CEN_OPT_WORLD" -a -z "$CEN_OPT_UGLIFY" ] ; then
+        run_world
+    else
+        [ -n "$CEN_OPT_WORLD" ] && CEN_OPT_EMPTY=1
+        run_pack "$1"
+    fi
+}
+
+# ------------------------------------------------------------------------------
+# Write output file: <file> <data>...
+# ------------------------------------------------------------------------------
+output() {
+    local fout="$1" outp=("${@:2}")
     create -t -v outp "${fout:-/dev/stdout}"
     if [ -n "$fout" ] ; then
-        [ -x "$file" ] && system -f -- chmod 775 "$fout"
+        [ -n "$CEN_OPT_WORLD" -o -x "$file" ] && system -f -- chmod 775 "$fout"
         message -a -p "Wrote %s lines into '%s'" "${#outp[@]}" "$fout"
     fi
 }
@@ -225,7 +273,6 @@ doctext() {
             [[ "$_line" == \#\ ----* ]] && break
             _blck+=("$_line")
         done
-### TODO
         [ "$_isok" = 1 ] && docblock "${_blck[@]}"
     done
 }
@@ -277,8 +324,7 @@ docline() {
 options() {
     case "$1" in
         # end of option parsing
-        '') [ -n "$CEN_OPT_WORLD" ] && { CEN_OPT_UGLIFY=1 ; CEN_OPT_EMPTY=1 ; }
-            [ -n "$CEN_OPT_UGLIFY" ] && CEN_OPT_TRIM=1 ;;
+        '') [ -n "$CEN_OPT_UGLIFY" ] && CEN_OPT_TRIM=1 ;;
 
         -D|--doc*) optarg  'doctext' -   -f ;;      # flag
         -E|--emp*) optarg  'empty'   -   -f ;;      # flag
@@ -294,7 +340,7 @@ options() {
 # Usage info
 # ------------------------------------------------------------------------------
 usage() {
-    create -c <<!EOF
+    usagecat <<!EOF
 Usage:     $CEN_NAME [-d|-h] [-q|-v] [-E] [-N] [-O <fout>] [-T|-U] [---] <finp>|.
 
            $CEN_TITLE.
@@ -315,18 +361,21 @@ Options:   -d --dryrun          show what would be done, make no changes
 Arguments: <finp>               input script (use '.' for mini-bash-lib source)
            <fout>               output file (use '.' to append '.p' to <finp>)
 
-Remarks:   Use '$CEN_NAME -W -O <file> .' to create a script template based on
-           a packed inline version of 'mini-bash-lib'.
-
-           In 'centauri-bash-lib' there is a tool named 'uglify' for similar
+Remarks:   In 'centauri-bash-lib' there is a tool named 'uglify' for similar
            purposes. While '$CEN_NAME' is very stupid and barely understands
            more of Bash scripting thant needed, 'uglify' is somewhat smarter.
 
-Examples:  # pack mini-bash-lib source (.p file)
+Examples:  # create a mini-bash-lib based 'hello world':
+           $CEN_NAME -W -O hello                        # using the proxy
+           $CEN_NAME -W -U -O hello                     # packed version
+
+           # pack mini-bash-lib source (.p file)
            $CEN_NAME -U -E -O . .
+
            # remove documentation comments from source
            $CEN_NAME -D -E -O myfile.pack myfile        # keep some comments
            $CEN_NAME -D -E -T -O myfile.pack myfile     # remove most comments
+
            # extract documentation comments
            $CEN_NAME -D -O myfile.doc myfile            # for centaurihelp -U
            $CEN_NAME -D -O -T myfile.doc myfile         # text only

@@ -1,83 +1,102 @@
 msgid ""
 msgstr "Content-Type: text/plain; charset=UTF-8\n"
 
-#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini-bash-lib:516
+#: ../../src/mini-bash-lib/mini-bash-lib:771
+msgid "%-16s:"
+msgstr "%-18s:"
+
+#: ../../src/mini-bash-lib/mini-bash-lib:774
 msgid "***ERROR***"
 msgstr "***FEHLER***"
 
-#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini-bash-lib:517
+#: ../../src/mini-bash-lib/mini-bash-lib:775
 msgid "***FATAL ERROR***"
 msgstr "***FATALER FEHLER***"
 
-#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini-bash-lib:524
+#: ../../src/mini-bash-lib/mini-bash-lib:782
 msgid "***WARNING***"
 msgstr "***WARNUNG***"
 
-#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini-bash-lib:577
+#: ../../src/mini-bash-lib/mini-bash-lib:835
 msgid "yes°no° [Y/n]? ° [y/N]? "
 msgstr "ja°nein° [J/n]? ° [j/N]? "
 
-#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini-bash-lib:593
+#: ../../src/mini-bash-lib/mini-bash-lib:851
 msgid "Please enter 'yes' or 'no'"
 msgstr "Bitte 'ja' oder 'nein' eingeben"
 
-#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini-bash-lib:618
-msgid "Existing file:"
-msgstr "Datei existiert:"
+#: ../../src/mini-bash-lib/mini-bash-lib:874
+msgid "Existing file"
+msgstr "Datei existiert"
 
-#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini-bash-lib:634
+#: ../../src/mini-bash-lib/mini-bash-lib:876
+msgid "Create file"
+msgstr "Datei erstellen"
+
+#: ../../src/mini-bash-lib/mini-bash-lib:888
 msgid "Failed to create file:"
 msgstr "Dateierstellung fehlgeschlagen:"
 
-#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini-bash-lib:648
+#: ../../src/mini-bash-lib/mini-bash-lib:902
 msgid "Execute"
 msgstr "Ausführen"
 
-#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini-bash-lib:650
+#: ../../src/mini-bash-lib/mini-bash-lib:904
 msgid "Skip"
 msgstr "Auslassen"
 
-#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini-bash-lib:687
-msgid "Is not a folder:"
+#: ../../src/mini-bash-lib/mini-bash-lib:941
+msgid "Not a folder:"
 msgstr "Ist kein Verzeichnis:"
 
-#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini-bash-lib:693
+#: ../../src/mini-bash-lib/mini-bash-lib:947
 msgid "Current folder"
 msgstr "Aktuelles Verz."
 
-#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini-bash-lib:775
-#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini-bash-lib:908
-msgid "Command not found:"
-msgstr "Kommando nicht gefunden:"
+#: ../../src/mini-bash-lib/mini-bash-lib:1032
+msgid "Command '%s' not found"
+msgstr "Kommando '%s' nicht gefunden"
 
-#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini-bash-lib:796
-msgid "Execution of '%s' failed (status %s)"
+#: ../../src/mini-bash-lib/mini-bash-lib:1052
+msgid "Running '%s' failed (status %s)"
 msgstr "Ausführen von '%s' fehlgeschlagen (Status %s)"
 
-#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini-bash-lib:815
+#: ../../src/mini-bash-lib/mini-bash-lib:1071
 msgid "Temporary file"
 msgstr "Temporäre Datei"
 
-#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini-bash-lib:843
+#: ../../src/mini-bash-lib/mini-bash-lib:1099
 msgid "Option '--help' is not implemented"
 msgstr "Option '--help' ist nicht implementiert"
 
-#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini-bash-lib:850
+#: ../../src/mini-bash-lib/mini-bash-lib:1106
 msgid "<unknown Author/Licence>"
 msgstr "<unbekannter Autor/Lizenz>"
 
-#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini-bash-lib:855
+#: ../../src/mini-bash-lib/mini-bash-lib:1111
 msgid "Unknown option:"
 msgstr "Unbekannte Option:"
 
-#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini-bash-lib:886
+#: ../../src/mini-bash-lib/mini-bash-lib:1126
+msgid "Missing option value:"
+msgstr "Wert für Option fehlt:"
+
+#: ../../src/mini-bash-lib/mini-bash-lib:1143
 msgid "Terminated after error"
 msgstr "Nach Fehler beendet"
 
-#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini-bash-lib:887
+#: ../../src/mini-bash-lib/mini-bash-lib:1144
 msgid "Terminated"
 msgstr "Beendet"
 
-#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini-bash-lib:908
+#: ../../src/mini-bash-lib/mini-bash-lib:1158
+msgid "Script exits"
+msgstr "Skript beendet"
+
+#: ../../src/mini-bash-lib/mini-bash-lib:1180
 msgid "***ABORT***"
 msgstr "***ABBRUCH***"
+
+#: ../../src/mini-bash-lib/mini-bash-lib:1180
+msgid "Command not found:"
+msgstr "Kommando nicht gefunden:"

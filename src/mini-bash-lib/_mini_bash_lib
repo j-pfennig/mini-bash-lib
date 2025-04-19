@@ -1,14 +1,21 @@
 #!/usr/bin/bash
 # ------------------------------------------------------------------------------
-# This is a proxy for mini-bash-lib. If enabled it can load centauri-bash-lib
-# instead of mini-bash-lib. There are three ways to disable this:
+# This is a proxy for mini-bash-lib. The proxy must not be copied and must be
+# located in the mini-bash-lib source folder. It should be sym-linked to every
+# folder containing a script that wants to use the shared mini-bash-lib. The
+# scripts then load the proxy using a statement like:
+#
+#   PATH+=":${0%/*}" . _mini_bash_lib <option>... - <version> || exit 2
+#
+# If centauri-bash-lib is installed it gets loaded centauri-bash-lib instead
+# of mini-bash-lib. There are three ways to disable this:
 #
 #   1)  CEN_FEATURE_N=1                 # before calling the proxy  -or-
 #   2)  _mini_bash_lib  ... -n ...      # disable centauri-bash-lib
 #   3)  --mini=1                        # command line option
 #
-#   The proxy passes all arguments to centauri-bash-lib but always sets -a
-#   -d -f (autoload dryrun force). It also set TEXTDOMAIN for i10n.
+# The proxy passes all arguments to centauri-bash-lib but always sets options
+# -a -d -f .r (autoload dryrun force run). It also sets the TEXTDOMAIN for i10n.
 # ------------------------------------------------------------------------------
 
 CEN_CMDBASE=                            # path of mini-bash-lib source
@@ -55,13 +62,11 @@ CEN_CMDBASE="${CEN_CMDBASE%/*}"
 if [ "$CEN_FEATURE_N" != 1 ] ; then
     CEN_CMDDATA=$(type -p '_centauri_bash_lib')
     CEN_CMDDATA="${CEN_CMDDATA%/*}/_centauri_bash_lib"
-   # [ -f "$CEN_CMDDATA" ] || CEN_FEATURE_N=1
 fi
 
 # try mini-bash-lib
 if [ "$CEN_FEATURE_N" = 1 ] || [ ! -f "$CEN_CMDDATA" ] ; then
     CEN_CMDDATA="$CEN_CMDBASE/mini-bash-lib"
-    [ -f "$CEN_CMDDATA" ] || return 127
     # set TEXTDOMAIN to mini library
     if [ -n "$CEN_FEATURE_T" ] ; then
         TEXTDOMAIN='mini-bash-lib' ; TEXTDOMAINDIR="${CEN_CMDBASE%/*/*}/share/locale"
@@ -70,7 +75,10 @@ fi
 
 # load library, have packed version?
 [ "${CEN_CMDDATA}.p" -nt "$CEN_CMDDATA" ] && CEN_CMDDATA+='.p'
-source "$CEN_CMDDATA" -a -d -f "$@"
+[ -f "$CEN_CMDDATA" ] || return 127
+source "$CEN_CMDDATA" -a -d -f -r "$@"
+# no implicit usage() call
+CEN_RUN_MIN_ARGS=0
 
 # set TEXTDOMAIN back to source
 if [ -n "$CEN_FEATURE_T" ] ; then

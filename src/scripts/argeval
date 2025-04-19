@@ -1,0 +1,42 @@
+#!/usr/bin/bash
+CEN_TITLE="Tool to test-run code with mini-bash-lib and centauri-bash-lib"
+
+# use proxy to load mini-bash-lib or centauri-bash-lib (if installed)
+PATH+=":${0%/*}" . _mini_bash_lib - '0.01' || exit 2
+
+run() {
+    if [ "$1" = 'EVAL' ] ; then
+        shift ; eval "$@"
+        trace "STAT $?" ; quit
+    fi
+    local opts
+    case "$CEN_VERB" in
+        0)  opts='-q' ;;
+        2)  opts='-v' ;;
+    esac
+    message 'EVAL' "$@"
+    message -l 'MINI -------------------------------'
+    $BASH_SOURCE --mini=1 $opts --- EVAL "$@"
+    message -l 'full -------------------------------'
+    $BASH_SOURCE --mini=0 $opts --- EVAL "$@"
+}
+
+usage() {
+    usagecat <<!EOF
+
+Usage:   $CEN_NAME <opt>... --- <expr>
+
+         $CEN_TITLE
+
+Options: -d --dryrun          show what would be done, make no changes
+         -f --force           override prudent default behaviours
+         -h --help            show this text
+         -q --quiet           report errors only
+         -v --verbose         be verbose (use twice for debug)
+
+Example: $CEN_NAME --- system -e -p something
+
+!EOF
+}
+
+main "$@" ; quit
