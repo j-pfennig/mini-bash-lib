@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html><head><meta charset='UTF-8'></meta>
+<title>centaurihelp ─ mini-bash-lib.doc</title>
+<link rel='stylesheet' type='text/css' href='default.css'></link>
+<script type='text/javascript' src='default.js'></script>
+</head><body onload='initialize("mini-bash-lib.doc")'><article id='top'>
+<nav><div class='nav-row'>
+<div class='nav-left'></div>
+<div class='nav-mid'><a href='content.html#top'>[Content]</a></div>
+<div class='nav-mid'><a href='reference.html#top'>[Reference]</a></div>
+<div class='nav-right'></div>
+</div></nav>
+<section id='section-1'>
+<div id='content' class='item-topic'>
+<span>Topic</span><span> - </span><span>content</span><span> - </span><span>Documentation</span></div>
+<div class='def-row'>
+<div class='def-label'>About:</div>
+<div class='def-block'>This is text documents mini-bash-lib, a framework for writing bash scripts.</div>
+</div>
+<div class='def-break'></div>
+<div class='def-row'>
+<div class='def-empty'></div>
+<div class='def-block'>A script is usually a single file that does embed the library code or loads the library at start-up time. The basic mini-bash-lib itself is contained in a single file. The size is about 10 kByte in 400 lines of code.</div>
+</div>
+<div class='def-row'>
+<div class='def-label'>Content:</div>
+<div class='def-text'>  • <a href="#minibashlib">mini bash lib</a>   Introduction and list of implemented functions
+  • <a href="#coexistence">Coexistence</a>     Compatibility with centauri-bash-lib
+  • <a href="#framework">Framework</a>       Understanding the framework functions
+  • <a href="#proxy">Proxy</a>           Using the proxy for shared library usage
+  • <a href="#gettext">Gettext</a>         Internationalization using GNU gettext</div>
+</div>
+<div class='def-row'>
+<div class='def-label'>Functions:</div>
+<div class='def-block'>Each script activates the framework by calling &apos;<b>main</b> <b>&quot;$@&quot;</b>&apos; passing all command line arguments:</div>
+</div>
+<div class='def-break'></div>
+<div class='def-row'>
+<div class='def-empty'></div>
+<div class='def-text'>  • <a href="#main">main</a>        [<i>opt</i>...] [---] [<i>arg</i>...]</div>
+</div>
+<div class='def-break'></div>
+<div class='def-row'>
+<div class='def-empty'></div>
+<div class='def-block'>The script code optionally implements some or all of the following functions that get called by the framework:</div>
+</div>
+<div class='def-break'></div>
+<div class='def-row'>
+<div class='def-empty'></div>
+<div class='def-text'>  • <a href="#options">options</a>     <i>opt</i> <i>arg</i>              # command line option parser
+  • <a href="#quit_hook">quit_hook</a>                        # cleaning up before termination
+  • <a href="#run">run</a>         <i>arg</i>...               # run the script&apos;s payload
+  • <a href="#usage">usage</a>                            # implement option --help</div>
+</div>
+</section>
+<section id='section-2'>
+<div id='minibashlib' class='item-topic'>
+<span>Topic</span><span> - </span><span>mini bash lib</span><span> - </span><span>A very minimal sub-set of <a href="index.html">centauri-bash-lib</a>rary</span></div>
+<div class='def-row'>
+<div class='def-label'>Purpose:</div>
+<div class='def-block'>The mini-bash-lib is of practical and educational use. Please note the following limitations:</div>
+</div>
+<div class='def-break'></div>
+<div class='def-row'>
+<div class='def-empty'></div>
+<div class='def-text'>  • it implements only something around 1% of centauri-bash-lib
+  • it is monolithic, e.g. there is no dynamic module loading
+  • it does not make use of loadable bash extensions</div>
+</div>
+<div class='def-break'></div>
+<div class='def-row'>
+<div class='def-empty'></div>
+<div class='def-block'>Besides of this, it still provides the following functionality:</div>
+</div>
+<div class='def-break'></div>
+<div class='def-row'>
+<div class='def-empty'></div>
+<div class='def-text'>  • it can be used simplify scripting and to support debugging
+  • it demonstrates some of the main design goals of centauri-bash-lib:
+    framework: here only some option parsing, <a href="#run">run</a>() and <a href="#usage">usage</a>()
+    debug support: options <b>-t</b>|<b>--trace</b> and <b>-d</b>|<b>--dryrun</b>, <a href="#trace">trace()</a>
+  • error handling: <a href="#error">error()</a>, <a href="#fatal">fatal()</a>, <a href="#quit">quit()</a>, <a href="#system">system()</a> to run commands
+  • simplify programming: <a href="#folder">folder()</a>, <a href="#splitjoin">splitjoin()</a>, <a href="#symlink">symlink()</a>, <a href="#confirm">confirm()</a>
+  • reasonable console output: <a href="#message">message()</a>, <a href="#warning">warning()</a>, <a href="#trace">trace()</a></div>
+</div>
+<div class='def-row'>
+<div class='def-label'>Content:</div>
+<div class='def-text'>The following functions and options are implemented:</div>
+</div>
+<div class='def-break'></div>
+<div class='def-row'>
+<div class='def-empty'></div>
+<div class='def-text'><a href="#confirm">confirm</a>     [<b>-a</b>|<b>-i</b>] [<b>-d</b> <i>dflt</i>] [<b>-f</b>] [<b>-n</b>|<b>-y</b>] [<b>-p</b> -|<i>what</i>] [<b>-s</b> <i>vnam</i>] [<b>-u</b>] [<b>--</b>] <i>text</i>...
+<a href="#copy">copy</a>        [<b>-f</b>|<b>-q</b>] [<b>-r</b>] [<b>-a</b>] [<b>-u</b>] [<b>--</b>] <i>arg</i>...
+<a href="#create">create</a>      [<b>-r</b>] [<b>-t</b>] [<b>-c</b>] [<b>-v</b> <i>vnam</i>] [<b>--</b>] <i>path</i>|-
+<a href="#dryrun">dryrun</a>      [<b>-r</b>]
+<a href="#embed">embed</a>       [<b>-a</b>|<b>-s</b> <i>vnam</i>] [<b>-e</b>|<b>-f</b>|<b>-q</b>|<b>-w</b>] [<b>-p</b>] [<b>-r</b>] [<b>-t</b>] [<b>--</b>] <i>tool</i> <i>arg</i>...
+<a href="#error">error</a>       [<b>-i</b>] [<b>-m</b>|<b>-p</b>] [<b>-q</b>|<b>-t</b>] [<b>--</b>] <i>text</i>...
+<a href="#fatal">fatal</a>       [<b>-m</b>|<b>-p</b>] [<b>--</b>] <i>text</i>...
+<a href="#folder">folder</a>      [<b>-c</b>] [<b>-m</b>] [<b>-p</b>] [<b>-f</b>|<b>-q</b>] [<b>--</b>] <i>path</i>
+<a href="#message">message</a>     [<b>-a</b>|<b>-i</b>] [<b>-c</b> <i>labl</i>] [<b>-m</b>|<b>-p</b>] [<b>--</b>] <i>text</i>...
+<a href="#optarg">optarg</a>      <i>name</i> <i>vnam</i>|- [<b>-t</b>|<b>-f</b>] [<i>valu</i>]
+<a href="#rename">rename</a>      [<b>-f</b>|<b>-q</b>] [<b>-r</b>] [<b>--</b>] <i>arg</i>...
+<a href="#remove">remove</a>      [<b>-f</b>|<b>-q</b>] [<b>-r</b>] [<b>-d</b>] [<b>-o</b>] [<b>--</b>] <i>arg</i>...
+<a href="#splitjoin">splitjoin</a>   [<b>-j</b>|<b>-s</b> <i>vnam</i>] [<b>-d</b> <i>deli</i>]
+<a href="#symlink">symlink</a>     [<b>-f</b>|<b>-q</b>] [<b>-r</b>] [<b>-n</b>] [<b>-r</b>] [<b>--</b>] <i>arg</i>...
+<a href="#system">system</a>      [<b>-a</b>|<b>-s</b> <i>vnam</i>] [<b>-c</b>] [<b>-d</b> <i>deli</i>] [<b>-e</b>|<b>-f</b>|<b>-q</b>|<b>-t</b>|<b>-w</b>] [<b>-p</b>] [<b>-r</b>] [<b>-z</b>] [<b>--</b>] <i>tool</i> <i>arg</i>...
+<a href="#tmpfile">tmpfile</a>     [<b>-n</b>] [<b>-r</b>] [<b>-s</b> <i>vnam</i>]
+<a href="#trace">trace</a>       [<b>-a</b>|<b>-i</b>] [<b>-c</b> <i>labl</i>] [<b>-m</b>|<b>-p</b>] [<b>--</b>] <i>text</i>...
+<a href="#warning">warning</a>     [<b>-a</b>|<b>-i</b>] [<b>-m</b>|<b>-p</b>] [<b>--</b>] <i>text</i>...
+<a href="#quit">quit</a>        [<b>-a</b>|<b>-i</b>] [<b>-e</b>|<b>-t</b>|<b>-u</b>] [<b>-m</b>|<b>-p</b>] [<b>-s</b> <i>code</i>] [<b>--</b>] <i>text</i>...</div>
+</div>
+<div class='def-row'>
+<div class='def-label'>General:</div>
+<div class='def-block'>The order of options is not relevant, &apos;<b>--</b>&apos; terminates the option list (if not used and the next argument starts with a &apos;-&apos; that argument would by parsed as an option).</div>
+</div>
+<div class='def-break'></div>
+<div class='def-row'>
+<div class='def-empty'></div>
+<div class='def-block'>Function options are always a hyphen followed by a single letter. Arguments must be a separate word. The command line parser, see <a href="#options">options</a>(), and function options are separate implementations.</div>
+</div>
+<div class='def-break'></div>
+<div class='def-row'>
+<div class='def-empty'></div>
+<div class='def-block'>Intentionally unknown function options are not causing an abort and stack trace like in centauri-bash-lib, see <a href="#coexistence">coexistence</a>.</div>
+</div>
+</section>
+<section id='section-3'>
+<div id='coexistence' class='item-topic'>
+<span>Topic</span><span> - </span><span>coexistence</span><span> - </span><span>Using mini-bash-lib script with <a href="index.html">centauri-bash-lib</a> installed</span></div>
+<div class='def-row'>
+<div class='def-label'>Sub-set:</div>
+<div class='def-block'>The mini-bash-lib is a drop-in compatible sub-set of centauri-bash-lib. The mini framework supports nothing but <a href="#main">main</a>() <a href="#options">options</a>() <a href="#run">run</a>() and <a href="#quit">quit()</a>. Only a core sub-set  of 20 functions is provided. Even these implemented functions have reduced functionality.</div>
+</div>
+<div class='def-break'></div>
+<div class='def-row'>
+<div class='def-empty'></div>
+<div class='def-block'>Among other things centauri-bash-lib implements services, batch processing and so called action verbs. Also error checking and debugging are supported much better. The mini-bash-lib ignores unimplemented function options or bad use of options where centauri-bash-lib aborts with a function call trace.</div>
+</div>
+<div class='def-row'>
+<div class='def-label'>Switching:</div>
+<div class='def-block'>Unless centauri-bash-lib where a proxy is mandatory, the mini-bash-lib can be embedded as a whole in the script or can use a proxy, see <a href="#proxy">proxy</a>. When using the proxy an installed version of centauri-bash-lib gets loaded by default. The command line option <b>&quot;--mini&quot;</b> can be used to prevent loading centauri-bash-lib:</div>
+</div>
+<div class='def-break'></div>
+<div class='def-row'>
+<div class='def-empty'></div>
+<div class='def-text'>  <b>--mini</b>=0        # (default) use centauri-bash-lib if installed
+  <b>--mini</b>=1        # always use mini-bash-lib</div>
+</div>
+<div class='def-row'>
+<div class='def-label'>Templates:</div>
+<div class='def-block'>The folder <b>&quot;/usr/share/doc/mini-bash-lib/Examples&quot;</b> contains two files that can be copied and used as a starting point for a new script:</div>
+</div>
+<div class='def-break'></div>
+<div class='def-row'>
+<div class='def-empty'></div>
+<div class='def-text'>  <b>shared</b>          # template using the proxy
+  <b>standalone</b>      # ... embedded mini-bash-lib</div>
+</div>
+<div class='def-row'>
+<div class='def-label'>Remarks:</div>
+<div class='def-block'>Generating mini-bash-lib scripts with centauricreate</div>
+</div>
+<div class='def-break'></div>
+<div class='def-row'>
+<div class='def-empty'></div>
+<div class='def-block'>run + The run function</div>
+</div>
+<div class='def-break'></div>
+<div class='def-row'>
+<div class='def-empty'></div>
+<div class='def-block'>usage + Providing help</div>
+</div>
+</section>
+<section id='section-4'>
+<div id='framework' class='item-topic'>
+<span>Topic</span><span> - </span><span>framework</span><span> - </span><span>Understanding the framework functions</span></div>
+<div class='def-break'></div>
+<div class='def-row'>
+<div class='def-empty'></div>
+<div class='def-block'>The <b>framework</b> imposes a simple source structure and control flow:</div>
+</div>
+<div class='def-row'>
+<div class='def-label'>Source:</div>
+<div class='def-text'>(A1) Load the proxy                         # shared version
+(A2) Script code
+(A3) Execute &apos;main <b>&quot;$@&quot;</b> ; quit&apos;</div>
+</div>
+<div class='def-break'></div>
+<div class='def-row'>
+<div class='def-empty'></div>
+<div class='def-text'>(B1) Script code                            # embedded version
+(B2) Embedded library code
+(B3) Execute &apos;main <b>&quot;$@&quot;</b> ; quit&apos;</div>
+</div>
+<div class='def-row'>
+<div class='def-label'>Control Flow:</div>
+<div class='def-text'>(1) <a href="#main">main</a>()                      # invoke framework
+(2)     <a href="#options">options</a>()               # optional: command line parser
+(3) <a href="#run">run</a>()                       # call by [[main()]]
+(4)     ... payload ...         # the payload
+(5) <a href="#quit">quit()</a>                      # leave framework
+(6)     <a href="#quit_hook">quit_hook</a>               # optional: custom clean-ups</div>
+</div>
+<div class='def-row'>
+<div class='def-label'>Remarks:</div>
+<div class='def-block'>Proxy             Using a proxy to load mini-bash-lib or centauri-bash-lib Embedding         Embedding mini-bash-lib in a script, packing to source Framework         Application framwork: main - options - usage - run - quit Error handling    Creating robust scripts: error - quit - trace - dryrun error <b>-t</b>        # status test error <b>-q</b>        # test and call quit -e</div>
+</div>
+<div class='def-break'></div>
+<div class='def-row'>
+<div class='def-empty'></div>
+<div class='def-block'>quit <b>-e</b>         # &apos;terminated after error&apos; quit <b>-t</b>         # &apos;terminated&apos;</div>
+</div>
+</section>
+<section id='section-5'>
+<div id='proxy' class='item-topic'>
+<span>Topic</span><span> - </span><span>proxy</span><span> - </span><span>Using the proxy to sharing the library and to support i10n</span></div>
+<div class='def-row'>
+<div class='def-label'>Purpose:</div>
+<div class='def-block'>Instead of embedding the library source into each script, a <b>proxy</b> can be used to locate and load the library source in the file system tree. The <b>proxy</b> also enables coexistence with centauri-bash-lib and allows to load GNU <a href="#gettext">gettext</a> translations (i10n).</div>
+</div>
+<div class='def-row'>
+<div class='def-label'>Call:</div>
+<div class='def-block'>The <b>proxy</b> file is <b>_mini_bash_lib</b>. It is located using <b>PATH</b> and gets sourced by bash:</div>
+</div>
+<div class='def-break'></div>
+<div class='def-row'>
+<div class='def-empty'></div>
+<div class='def-text'><b>PATH+=</b><b>&quot;:${0%/*}&quot;</b> <b>. _mini_bash_lib</b> <i>opt</i>... <b>-</b> <i>vers</i> <b>|| exit 2</b></div>
+</div>
+<div class='def-row'>
+<div class='def-label'>Arguments:</div>
+<div class='def-text'><i>opt</i>   <b>proxy</b> options, see below
+<i>vers</i>  a version string like <b>&quot;nn.mm&quot;</b></div>
+</div>
+<div class='def-row'>
+<div class='def-label'>Options:</div>
+<div class='def-text'><b>-f</b>  enable the <b>--force</b> command line option
+<b>-t</b>  enable <a href="#gettext">gettext</a> internationalization
+<b>-n</b>  do never use centauri-bah-lib, see <a href="#coexistence">coexistence</a>
+<b>-y</b>  enable <b>--yes</b>/<b>--no</b> cmd line options</div>
+</div>
+<div class='def-row'>
+<div class='def-label'>Example:</div>
+<div class='def-text'>See: <b>/usr/share/doc/mini-bash-lib/Examples/shared</b></div>
+</div>
+<div class='def-row'>
+<div class='def-label'>Usage:</div>
+<div class='def-block'>The <b>proxy</b> code must be in then same folder as the library itself. The best way to using it is symlinking the <b>proxy</b> from <b>/usr/local/bin</b> to the installation folder. Obviously <b>/usr/local/bin</b> must be in your <b>PATH</b>:</div>
+</div>
+<div class='def-break'></div>
+<div class='def-row'>
+<div class='def-empty'></div>
+<div class='def-text'><pre>cd /usr/local/bin
+ln <b>-s</b> /usr/share/src/mini-bash-lib/_mini_bash_lib .</pre></div>
+</div>
+<div class='def-break'></div>
+<div class='def-row'>
+<div class='def-empty'></div>
+<div class='def-text'><pre>PATH+=:/usr/local/bin               # should be in your shell profile</pre></div>
+</div>
+<div class='def-break'></div>
+<div class='def-row'>
+<div class='def-empty'></div>
+<div class='def-block'>Alternatively any folder containing a script using the <b>proxy</b> can have an explicit symlink to the <b>proxy</b>. In this case <b>PATH</b> needs no reference to the folder:</div>
+</div>
+<div class='def-break'></div>
+<div class='def-row'>
+<div class='def-empty'></div>
+<div class='def-text'><pre>cd ~/my-tools                       # a private folder
+ln <b>-s</b> /usr/share/src/mini-bash-lib/_mini_bash_lib .</pre></div>
+</div>
+<div class='def-break'></div>
+<div class='def-row'>
+<div class='def-empty'></div>
+<div class='def-text'><pre>~/my-tools/example                  # no need to set PATH</pre></div>
+</div>
+<div class='def-row'>
+<div class='def-label'>Remarks:</div>
+<div class='def-block'><b>Do not copy the proxy, use symbolic links only</b>. The <b>proxy</b> runs <b>realpath</b> to locate mini-bash-lib via the symbolic link.</div>
+</div>
+<div class='def-break'></div>
+<div class='def-row'>
+<div class='def-empty'></div>
+<div class='def-block'>The processing the <b>--mini</b> command line option is part of the <b>proxy</b>. This option is otherwise ignored by mini-bash-lib and centauri-bash-lib.</div>
+</div>
+<div class='def-break'></div>
+<div class='def-row'>
+<div class='def-empty'></div>
+<div class='def-block'>When using mini-bash-lib (see <a href="#coexistence">coexistence</a>), all <b>proxy</b> options and arguments are passed to _centauri_bash_lib (e.g. the <b>proxy</b> of centauri-bash-lib).</div>
+</div>
+</section>
+<section id='section-6'>
+<div id='gettext' class='item-topic'>
+<span>Topic</span><span> - </span><span>gettext</span><span> - </span><span>Internationalization using GNU gettext</span></div>
+<div class='def-row'>
+<div class='def-label'>Bla:</div>
+<div class='def-block'>bla bla</div>
+</div>
+<div class='def-row'>
+<div class='def-label'>Bla:</div>
+<div class='def-block'>bla bla</div>
+</div>
+<div class='def-row'>
+<div class='def-label'>Remarks:</div>
+<div class='def-block'>bla</div>
+</div>
+</section>
+<section id='section-7'>
+<div id='main' class='item-topic'>
+<span>Topic</span><span> - </span><span>main</span><span> - </span><span>Callback: Invoking the framework, option parsing</span></div>
+<div class='def-row'>
+<div class='def-label'>command line:</div>
+<div class='def-block'>The <b>main</b>() function is the entry point for a script&apos;s code. It parses command line options (not to be confused with function options) and passed the remaining call arguments to <a href="#run">run</a>().</div>
+</div>
+<div class='def-row'>
+<div class='def-label'>options:</div>
+<div class='def-block'>The framework implements a few options by default, see below. If a script implements an <a href="#options">options</a>() function, this gets called before the internal implementation. For each command line option the options function is called once, see <a href="#optarg">optarg()</a>. When all options were processed ... empty call ...</div>
+</div>
+<div class='def-row'>
+<div class='def-label'>Call:</div>
+<div class='def-text'><b>main</b> [<i>opt</i>...] [---] [<i>arg</i>...]</div>
+</div>
+<div class='def-row'>
+<div class='def-label'>Options:</div>
+<div class='def-text'>-<i>char</i>             short option
+-<i>char</i><i>value</i>      short option with value (no separating space)
+-<i>char</i> <i>value</i>     short option followed by value argument
+<b>--</b><i>name</i>            long option
+<b>--</b><i>name</i>=<i>value</i>    long option with value (using <b>&quot;=&quot;</b> separator)
+<b>--</b><i>name</i> <i>value</i>    short option followed by value argument</div>
+</div>
+<div class='def-row'>
+<div class='def-label'>Arguments:</div>
+<div class='def-text'>everything goes</div>
+</div>
+<div class='def-row'>
+<div class='def-label'>Return:</div>
+<div class='def-text'>not used, see <a href="#quit">quit()</a></div>
+</div>
+</section>
+<section id='section-8'>
+<div id='options' class='item-topic'>
+<span>Topic</span><span> - </span><span>options</span><span> - </span><span>Callback: Command Line Option Parser</span></div>
+<div class='def-row'>
+<div class='def-label'>Purpose:</div>
+<div class='def-block'>bla</div>
+</div>
+<div class='def-row'>
+<div class='def-label'>Important:</div>
+<div class='def-block'><b>DO NOT</b> &apos;exit&apos; or quit</div>
+</div>
+</section>
+<section id='section-9'>
+<div id='quit_hook' class='item-topic'>
+<span>Topic</span><span> - </span><span>quit_hook</span><span> - </span><span>Callback: Cleaning up before Termination</span></div>
+<div class='def-row'>
+<div class='def-label'>Purpose:</div>
+<div class='def-block'>bla</div>
+</div>
+<div class='def-row'>
+<div class='def-label'>Important:</div>
+<div class='def-block'><b>DO NOT</b> &apos;exit&apos; or quit</div>
+</div>
+</section>
+<section id='section-10'>
+<div id='usage' class='item-topic'>
+<span>Topic</span><span> - </span><span>usage</span><span> - </span><span>Callback: Implement Option --help</span></div>
+<div class='def-row'>
+<div class='def-label'>Purpose:</div>
+<div class='def-block'>bla</div>
+</div>
+<div class='def-row'>
+<div class='def-label'>Important:</div>
+<div class='def-block'><b>DO NOT</b> &apos;exit&apos; or quit</div>
+</div>
+</section>
+<section id='section-11'>
+<div id='run' class='item-topic'>
+<span>Topic</span><span> - </span><span>run</span><span> - </span><span>Callback: run the Payload Part of a Script</span></div>
+<div class='def-row'>
+<div class='def-label'>Call:</div>
+<div class='def-text'><b>run</b> [<i>arg</i>...]</div>
+</div>
+<div class='def-row'>
+<div class='def-label'>Remarks:</div>
+<div class='def-block'>This function is a custom function that is called by <a href="#main">main</a>() after option parsing. To make sure that <a href="#quit">quit()</a> gets called in case that <b>run</b> returns, always invoke the framework as:</div>
+</div>
+<div class='def-break'></div>
+<div class='def-row'>
+<div class='def-empty'></div>
+<div class='def-block'><pre>main <b>&quot;$@&quot;</b> ; quit</pre></div>
+</div>
+<div class='def-break'></div>
+<div class='def-row'>
+<div class='def-empty'></div>
+<div class='def-block'>The return code of <b>run</b> is not interpreted. Also the <b>run</b> is option, if not present the framework calls <a href="#quit">quit()</a> after option parsing.</div>
+</div>
+</section>
+<section id='section-12'>
+<div id='confirm' class='item-function'>
+<span>Function</span><span> - </span><span>confirm</span><span> - </span><span>prompt for console input</span></div>
+<div class='def-row'>
+<div class='def-label'>Call:</div>
+<div class='def-text'><b>confirm</b> [<b>-a</b>|<b>-i</b>] [<b>-d</b> <i>dflt</i>] [<b>-f</b>] [<b>-n</b>|<b>-y</b>] [<b>-p</b> -|<i>what</i>] [<b>-s</b> <i>vnam</i>] [<b>-u</b>] [<b>--</b>] <i>text</i>...</div>
+</div>
+<div class='def-row'>
+<div class='def-label'>Options:</div>
+<div class='def-text'><b>-a</b>  indent automatically
+<b>-d</b>  default reply, also used with &apos;<b>-p</b> .&apos;
+<b>-f</b>  printf formatting, 1st non-options argument is format
+<b>-i</b>  always indent
+<b>-n</b>  yes/No prompt, short for: <b>-p</b> &apos; [y/N]? &apos; <b>-d</b> &apos;no&apos;
+<b>-p</b>  appended to prompt text, see below for <b>&quot;-&quot;</b>|<b>&quot;+&quot;</b>|<b>&quot;.&quot;</b>
+<b>-s</b>  save reply to <i>vnam</i> variable
+<b>-u</b>  allow upper case characters in reply
+<b>-y</b>  Yes/no prompt, short for: <b>-p</b> &apos; [n/Y]? &apos; <b>-d</b> &apos;yes&apos;</div>
+</div>
+<div class='def-row'>
+<div class='def-label'>Arguments:</div>
+<div class='def-text'><i>dflt</i>          final part of prompt. Example: <b>&quot; [OK]? &quot;</b>
+<i>text</i>          prompt message
+<i>vnam</i>          name of a variable to receice input
+<i>what</i>  -       ask for free text input
+      +       ask for a password (no echo)
+      .       append &apos; [<i>dflt</i>]: &apos; to prompt text
+      <i>any</i>     append &apos; <i>any</i> &apos; to prompt text
+<i>text</i>          prompt text</div>
+</div>
+<div class='def-row'>
+<div class='def-label'>Return:</div>
+<div class='def-text'><b>true</b> for <b>&quot;yes&quot;</b> answer or non-empty result otherwise
+<b>false</b> for <b>&quot;no&quot;</b> answer or empty result</div>
+</div>
+<div class='def-row'>
+<div class='def-label'>Remarks:</div>
+<div class='def-block'>The options <b>--yes</b>/<b>--no</b> passed to main cause prompts to be suppressed and to return the following result:</div>
+</div>
+<div class='def-break'></div>
+<div class='def-row'>
+<div class='def-empty'></div>
+<div class='def-text'><b>--no</b>    <b>confirm</b> always returns false
+<b>--yes</b>   accept the default answer (as if <i>return</i> were hit)</div>
+</div>
+<div class='def-row'>
+<div class='def-label'>Examples:</div>
+<div class='def-text'><b>confirm</b> <b>-p</b> &apos;.&apos; <b>-d</b> &apos;good&apos; &apos;How do you feel today&apos;</div>
+</div>
+</section>
+<section id='section-13'>
+<div id='copy' class='item-function'>
+<span>Function</span><span> - </span><span>copy</span><span> - </span><span>conveniency wrapper for coreutils &apos;cp&apos;</span></div>
+<div class='def-row'>
+<div class='def-label'>Call:</div>
+<div class='def-text'><b>copy</b> [<b>-f</b>|<b>-q</b>] [<b>-r</b>] [<b>-a</b>] [<b>-u</b>] [<b>--</b>] <i>arg</i>...</div>
+</div>
+<div class='def-row'>
+<div class='def-label'>Options:</div>
+<div class='def-text'><b>-a</b>  run &apos;cp <b>-a</b>&apos; (archive)
+<b>-f</b>  make errors fatal
+<b>-q</b>  do not report errors
+<b>-r</b>  ignore <b>--dryrun</b>
+<b>-u</b>  run &apos;cp <b>-u</b>&apos; (update)</div>
+</div>
+<div class='def-break'></div>
+<div class='def-row'>
+<div class='def-empty'></div>
+<div class='def-text'>options not listed above are ignored</div>
+</div>
+<div class='def-row'>
+<div class='def-label'>Arguments:</div>
+<div class='def-text'><i>arg</i>   all arguments are literally passed to &apos;cp&apos;</div>
+</div>
+<div class='def-row'>
+<div class='def-label'>Return:</div>
+<div class='def-text'>The status of &apos;cp&apos; or <b>false</b> with <b>--dryrun</b></div>
+</div>
+<div class='def-row'>
+<div class='def-label'>Remarks:</div>
+<div class='def-block'>This function executes something like <b>&quot;system -e -p -- cp &lt;arg&gt;&quot;</b> to simplify error handling.</div>
+</div>
+</section>
+<section id='section-14'>
+<div id='create' class='item-function'>
+<span>Function</span><span> - </span><span>create</span><span> - </span><span>create a file, write to file or stdout</span></div>
+<div class='def-row'>
+<div class='def-label'>Call:</div>
+<div class='def-text'><b>create</b> [<b>-r</b>] [<b>-t</b>] [<b>-c</b>] [<b>-v</b> <i>vnam</i>] [<b>--</b>] [<i>path</i>|<b>-</b>]</div>
+</div>
+<div class='def-row'>
+<div class='def-label'>Options:</div>
+<div class='def-text'><b>-c</b>  copy from stdin
+<b>-r</b>  ignore <b>--dryrun</b>
+<b>-t</b>  truncate, replace an existing file
+<b>-v</b>  get data from (array) variable</div>
+</div>
+<div class='def-row'>
+<div class='def-label'>Arguments:</div>
+<div class='def-text'><i>path</i>  file path or &apos;-&apos; for /dev/stdout
+<i>vnam</i>  name of a variable</div>
+</div>
+<div class='def-row'>
+<div class='def-label'>Return:</div>
+<div class='def-text'><b>true</b> on success  -or-  <b>false</b> otherwise</div>
+</div>
+<div class='def-row'>
+<div class='def-label'>Remarks:</div>
+<div class='def-block'>Without option <b>-t</b> this function does nothing and returns <b>false</b> if <i>path</i> already exists. This function does not try by itself to append to an existing file, but will do so for a file already opened in append mode.</div>
+</div>
+</section>
+<section id='section-15'>
+<div id='dryrun' class='item-function'>
+<span>Function</span><span> - </span><span>dryrun</span><span> - </span><span>test for option --dryrun, generate trace message</span></div>
+<div class='def-row'>
+<div class='def-label'>Call:</div>
+<div class='def-text'><b>dryrun</b> [<b>-r</b>] [<b>--</b>] <i>text</i>...</div>
+</div>
+<div class='def-row'>
+<div class='def-label'>Options:</div>
+<div class='def-text'><b>-r</b>  ignore <b>--dryrun</b> (return <b>false</b>)</div>
+</div>
+<div class='def-break'></div>
+<div class='def-row'>
+<div class='def-empty'></div>
+<div class='def-text'>options not listed above are ignored</div>
+</div>
+<div class='def-row'>
+<div class='def-label'>Arguments:</div>
+<div class='def-text'><i>text</i>  text for <b>--dryrun</b> <a href="#trace">trace()</a> message</div>
+</div>
+<div class='def-row'>
+<div class='def-label'>Return:</div>
+<div class='def-text'><b>true</b> for <b>--dryrun</b>, <b>false</b> otherwise</div>
+</div>
+<div class='def-row'>
+<div class='def-label'>Examples:</div>
+<div class='def-text'><pre><b>dryrun</b> <b>&quot;skip some steps&quot;</b> &amp;&amp; return</pre></div>
+</div>
+<div class='def-break'></div>
+<div class='def-row'>
+<div class='def-empty'></div>
+<div class='def-text'><pre>if ! <b>dryrun</b> <b>&quot;Create file list:&quot;</b> <b>&quot;$PWD&quot;</b> ; then
+    ls -1 &gt; <b>&quot;$tmpfile&quot;</b>
+fi</pre></div>
+</div>
+</section>
+<section id='section-16'>
+<div id='embed' class='item-function'>
+<span>Function</span><span> - </span><span>embed</span><span> - </span><span>run another script like a sub-routine</span></div>
+<div class='def-row'>
+<div class='def-label'>Call:</div>
+<div class='def-text'><b>embed</b> [<b>-a</b>|<b>-s</b> <i>vnam</i>] [<b>-e</b>|<b>-f</b>|<b>-q</b>|<b>-w</b>] [<b>-p</b>] [<b>-r</b>] [<b>-t</b>] [<b>--</b>] <i>tool</i> <i>arg</i>...</div>
+</div>
+<div class='def-row'>
+<div class='def-label'>Options:</div>
+<div class='def-text'><b>-a</b>  return output as array of lines in <i>vnam</i>
+<b>-e</b>  output an error message on error
+<b>-f</b>  make errors fatal
+<b>-p</b>  pretty print error/warning output
+<b>-q</b>  redirect <b>stdout</b> and <b>stderr</b> to <b>&quot;/dev/null&quot;</b>
+<b>-r</b>  ignore <b>--dryrun</b>
+<b>-s</b>  return output as a single line in <i>vnam</i>
+<b>-t</b>  silent test, return <b>false</b> for previous error
+<b>-w</b>  output a warning on error</div>
+</div>
+<div class='def-row'>
+<div class='def-label'>Arguments:</div>
+<div class='def-text'><i>tool</i>  a mini-bash-lib or centauri-bash-lib script to be run
+<i>arg</i>   options or arguments passed to the script</div>
+</div>
+<div class='def-row'>
+<div class='def-label'>Remark:</div>
+<div class='def-block'>The current script name is passed to <i>tool</i> as <b>--embed</b>=$<b>CEN_NAME</b>.</div>
+</div>
+<div class='def-row'>
+<div class='def-label'>Return:</div>
+<div class='def-block'>The return code of <i>tool</i> unless 3 (abort). In the later case <b>embed</b>() does call <b>&quot;quit -s 3&quot;</b>.</div>
+</div>
+</section>
+<section id='section-17'>
+<div id='error' class='item-function'>
+<span>Function</span><span> - </span><span>error</span><span> - </span><span>output an error message</span></div>
+<div class='def-row'>
+<div class='def-label'>Call:</div>
+<div class='def-text'><b>error</b> [<b>-a</b>|<b>-i</b>] [<b>-m</b>|<b>-p</b>] [<b>-q</b>|<b>-t</b>] [<b>--</b>] <i>text</i>...</div>
+</div>
+<div class='def-row'>
+<div class='def-label'>Options:</div>
+<div class='def-text'><b>-a</b>  auto-indent (e.g. do not print the script name)
+<b>-i</b>  always indent
+<b>-m</b>  multi-line output (one line per <i>text</i> argument)
+<b>-p</b>  printf formatting (1st <i>text</i> arg. is format)
+<b>-q</b>  call <b>&quot;quit -q&quot;</b> if a previous <b>error</b> has occurred
+<b>-t</b>  silent test, return <b>false</b> for previous <b>error</b></div>
+</div>
+<div class='def-row'>
+<div class='def-label'>Arguments:</div>
+<div class='def-text'><i>text</i>  Any text to be output</div>
+</div>
+<div class='def-row'>
+<div class='def-label'>Return:</div>
+<div class='def-text'><b>true</b> on success (only <b>-q</b>|<b>-t</b>)  -or-  <b>false</b> otherwise</div>
+</div>
+<div class='def-row'>
+<div class='def-label'>Examples:</div>
+<div class='def-text'><pre>system    cmd1
+system <b>-t</b> cmd2
+<b>error</b> <b>-q</b> <b>&quot;A previous command has failed&quot;</b></pre></div>
+</div>
+<div class='def-break'></div>
+<div class='def-row'>
+<div class='def-empty'></div>
+<div class='def-text'><pre>while <b>error</b> <b>-t</b> ; do
+    do_something
+done</pre></div>
+</div>
+</section>
+<section id='section-18'>
+<div id='fatal' class='item-function'>
+<span>Function</span><span> - </span><span>fatal</span><span> - </span><span>output a fatal error message and run quit</span></div>
+<div class='def-row'>
+<div class='def-label'>Call:</div>
+<div class='def-text'><b>fatal</b> [<b>-m</b>|<b>-p</b>] [<b>--</b>] <i>text</i>...</div>
+</div>
+<div class='def-row'>
+<div class='def-label'>Options:</div>
+<div class='def-text'><b>-a</b>  auto-indent (e.g. do not repeat to script name)
+<b>-i</b>  always indent
+<b>-m</b>  multi-line output (one line per <i>text</i> argument)
+<b>-p</b>  printf formatting (1st <i>text</i> arg. is format)</div>
+</div>
+<div class='def-row'>
+<div class='def-label'>Arguments:</div>
+<div class='def-text'><i>text</i>  Any text to be output</div>
+</div>
+<div class='def-row'>
+<div class='def-label'>Return:</div>
+<div class='def-text'>This function never returns</div>
+</div>
+</section>
+<section id='section-19'>
+<div id='folder' class='item-function'>
+<span>Function</span><span> - </span><span>folder</span><span> - </span><span>change working folder or create a new folder</span></div>
+<div class='def-row'>
+<div class='def-label'>Call:</div>
+<div class='def-text'><b>folder</b> [<b>-c</b>] [<b>-m</b>] [<b>-p</b>] [<b>-f</b>|<b>-q</b>] [<b>--</b>] <i>path</i></div>
+</div>
+<div class='def-row'>
+<div class='def-label'>Options:</div>
+<div class='def-text'><b>-c</b>  change current <b>folder</b> (default is to check existence)
+<b>-f</b>  make errors fatal
+<b>-m</b>  create <b>folder</b> as needed
+<b>-p</b>  change to physical path
+<b>-q</b>  do not report errors</div>
+</div>
+<div class='def-row'>
+<div class='def-label'>Arguments:</div>
+<div class='def-text'><i>path</i>  <b>folder</b> path</div>
+</div>
+<div class='def-row'>
+<div class='def-label'>Return:</div>
+<div class='def-text'><b>true</b> on success  -or-  <b>false</b> otherwise</div>
+</div>
+</section>
+<section id='section-20'>
+<div id='message' class='item-function'>
+<span>Function</span><span> - </span><span>message</span><span> - </span><span>Output text to stderr</span></div>
+<div class='def-row'>
+<div class='def-label'>Call:</div>
+<div class='def-text'><b>message</b> [<b>-a</b>|<b>-i</b>] [<b>-c</b> <i>labl</i>] [<b>-m</b>|<b>-p</b>] [<b>--</b>] <i>text</i>...</div>
+</div>
+<div class='def-row'>
+<div class='def-label'>Options:</div>
+<div class='def-text'><b>-a</b>  auto-indent (e.g. do not repeat to script name)
+<b>-c</b>  start with an 18 char fixed size label field
+<b>-i</b>  always indent
+<b>-m</b>  multi-line output (one line per <i>text</i> argument)
+<b>-p</b>  printf formatting (1st <i>text</i> arg. is format)</div>
+</div>
+<div class='def-row'>
+<div class='def-label'>Arguments:</div>
+<div class='def-text'><i>labl</i>  label field text (field width is 18 chars)
+<i>text</i>  Any text to be output</div>
+</div>
+<div class='def-row'>
+<div class='def-label'>Return:</div>
+<div class='def-text'><b>true</b> on success</div>
+</div>
+</section>
+<section id='section-21'>
+<div id='optarg' class='item-function'>
+<span>Function</span><span> - </span><span>optarg</span><span> - </span><span>Option setter for use in options() call-back</span></div>
+<div class='def-row'>
+<div class='def-label'>Call:</div>
+<div class='def-text'>(1) <b>optarg</b> <i>name</i> <i>vnam</i>|- <b>-f</b>
+(2) <b>optarg</b> <i>name</i> <i>vnam</i>|- <b>-t</b> [<i>valu</i>]</div>
+</div>
+<div class='def-row'>
+<div class='def-label'>Options:</div>
+<div class='def-text'><b>-f</b>      flag option, set <i>vnam</i> to <b>&quot;1&quot;</b>
+<b>-t</b>      text option, set <i>vnam</i> to option argument or <i>valu</i></div>
+</div>
+<div class='def-row'>
+<div class='def-label'>Arguments:</div>
+<div class='def-text'><i>name</i>  option long name
+<i>vnam</i>  name of a variable to be set. If <b>&quot;-&quot;</b> the name is generated
+      from name like: <b>CEN_OPT_</b><i>name</i>
+<i>valu</i>  default used when the option argument is <b>&quot;-&quot;</b></div>
+</div>
+<div class='def-row'>
+<div class='def-label'>Return:</div>
+<div class='def-text'><b>true</b> on success</div>
+</div>
+</section>
+<section id='section-22'>
+<div id='rename' class='item-function'>
+<span>Function</span><span> - </span><span>rename</span><span> - </span><span>conveniency wrapper for coreutils &apos;mv&apos;</span></div>
+<div class='def-row'>
+<div class='def-label'>Call:</div>
+<div class='def-text'><b>rename</b> [<b>-f</b>|<b>-q</b>] [<b>-r</b>] [<b>--</b>] <i>arg</i>...</div>
+</div>
+<div class='def-row'>
+<div class='def-label'>Options:</div>
+<div class='def-text'><b>-f</b>  make errors fatal
+<b>-q</b>  do not report errors
+<b>-r</b>  ignore <b>--dryrun</b></div>
+</div>
+<div class='def-row'>
+<div class='def-label'>Arguments:</div>
+<div class='def-text'><i>arg</i>   passed to <b>&quot;mv&quot;</b> tool</div>
+</div>
+<div class='def-row'>
+<div class='def-label'>Return:</div>
+<div class='def-text'><b>true</b> on success  -or-  <b>false</b> otherwise</div>
+</div>
+<div class='def-row'>
+<div class='def-label'>Remarks:</div>
+<div class='def-block'>This function executes something like <b>&quot;system -e -p -- mv &lt;arg&gt;&quot;</b> to simplify error handling. Unlike in centauri-bash-lib no bash builtin is used.</div>
+</div>
+</section>
+<section id='section-23'>
+<div id='remove' class='item-function'>
+<span>Function</span><span> - </span><span>remove</span><span> - </span><span>conveniency wrapper for coreutils &apos;rm&apos;</span></div>
+<div class='def-row'>
+<div class='def-label'>Call:</div>
+<div class='def-text'><b>remove</b> [<b>-f</b>|<b>-q</b>] [<b>-r</b>] [<b>-d</b>] [<b>-o</b>] [<b>--</b>] <i>arg</i>...</div>
+</div>
+<div class='def-row'>
+<div class='def-label'>Options:</div>
+<div class='def-text'><b>-f</b>  make errors fatal
+<b>-d</b>  <b>remove</b> folders recursively
+<b>-o</b>  pass <b>&quot;--one-filesystem&quot;</b> to <b>&quot;rm&quot;</b>
+<b>-q</b>  do not report errors
+<b>-r</b>  ignore <b>--dryrun</b></div>
+</div>
+<div class='def-row'>
+<div class='def-label'>Arguments:</div>
+<div class='def-text'><i>arg</i>   passed to <b>&quot;rm&quot;</b> tool</div>
+</div>
+<div class='def-row'>
+<div class='def-label'>Return:</div>
+<div class='def-text'><b>true</b> on success  -or-  <b>false</b> otherwise</div>
+</div>
+<div class='def-row'>
+<div class='def-label'>Remarks:</div>
+<div class='def-block'>This function executes something like <b>&quot;system -e -p -- rm -f &lt;arg&gt;&quot;</b> to simplify error handling. Unlike in centauri-bash-lib no bash builtin is used.</div>
+</div>
+</section>
+<section id='section-24'>
+<div id='splitjoin' class='item-function'>
+<span>Function</span><span> - </span><span>splitjoin</span><span> - </span><span>split text data into array or join data to string</span></div>
+<div class='def-row'>
+<div class='def-label'>Call:</div>
+<div class='def-text'><b>splitjoin</b> <b>-j</b> <i>vstr</i> [<b>-d</b> <i>deli</i>] [<b>--</b>] <i>text</i>...           # join to string
+ <b>splitjoin</b> <b>-s</b> <i>varr</i> [<b>-d</b> <i>deli</i>] [<b>--</b>] <i>text</i>...           # split to array</div>
+</div>
+<div class='def-row'>
+<div class='def-label'>Options:</div>
+<div class='def-text'><b>-d</b>  IFS delimiters (default <b>-j</b>: &apos;\t&apos; <b>-s</b>: &apos;\t\n&apos;)
+<b>-j</b>  join to a single string, default delimiter is &apos;\t&apos; (tab)
+<b>-s</b>  split to array, default delimiter is &apos;\n\<b>-t</b>&apos; (nl and tab)</div>
+</div>
+<div class='def-row'>
+<div class='def-label'>Arguments:</div>
+<div class='def-text'><i>deli</i>  list of single char field delimiters (processed via printf)
+<i>varr</i>  name of array variable for split result
+<i>vstr</i>  name of string variable for joiin result
+<i>text</i>  any input data</div>
+</div>
+<div class='def-row'>
+<div class='def-label'>Return:</div>
+<div class='def-text'><b>true</b> on success</div>
+</div>
+</section>
+<section id='section-25'>
+<div id='symlink' class='item-function'>
+<span>Function</span><span> - </span><span>symlink</span><span> - </span><span>conveniency wrapper for corutils &apos;ln -s&apos;</span></div>
+<div class='def-row'>
+<div class='def-label'>Call:</div>
+<div class='def-text'><b>symlink</b> [<b>-f</b>|<b>-q</b>] [<b>-l</b>] [<b>-n</b>] [<b>-r</b>] [<b>--</b>] <i>arg</i>...</div>
+</div>
+<div class='def-row'>
+<div class='def-label'>Options:</div>
+<div class='def-text'><b>-f</b>  make errors fatal
+<b>-l</b>  make a relative <b>symlink</b>
+<b>-n</b>  no error checks, use <b>&quot;ln -s -f&quot;</b>
+<b>-q</b>  do not report errors
+<b>-r</b>  ignore <b>--dryrun</b></div>
+</div>
+<div class='def-row'>
+<div class='def-label'>Arguments:</div>
+<div class='def-text'><i>arg</i>   passed to <b>&quot;ln&quot;</b> tool</div>
+</div>
+<div class='def-row'>
+<div class='def-label'>Return:</div>
+<div class='def-text'><b>true</b> on success  -or-  <b>false</b> otherwise</div>
+</div>
+<div class='def-row'>
+<div class='def-label'>Remarks:</div>
+<div class='def-block'>This function executes something like <b>&quot;system -e -p -- ln -s &lt;arg&gt;&quot;</b> to simplify error handling. Unlike in centauri-bash-lib no bash builtin is used.</div>
+</div>
+</section>
+<section id='section-26'>
+<div id='system' class='item-function'>
+<span>Function</span><span> - </span><span>system</span><span> - </span><span>Run an external (or builtin) command</span></div>
+<div class='def-row'>
+<div class='def-label'>Call:</div>
+<div class='def-text'><b>system</b> [<b>-a</b>|<b>-s</b> <i>vnam</i>] [<b>-d</b> <i>deli</i>] [<b>-e</b>|<b>-f</b>|<b>-q</b>|<b>-w</b>] [<b>-p</b>] [<b>-r</b>] [<b>-t</b>] [<b>-z</b>] [<b>--</b>] <i>tool</i> <i>arg</i>...
+<b>system</b> <b>-c</b> [<b>-e</b>|<b>-f</b>|<b>-q</b>|<b>-w</b>] [<b>--</b>] <i>tool</i>...</div>
+</div>
+<div class='def-row'>
+<div class='def-label'>Options:</div>
+<div class='def-text'><b>-a</b>  capture output to array
+<b>-c</b>  check if arguments are executable commands
+<b>-d</b>  set IFS word separators or set line mode
+<b>-e</b>  output an error message on error
+<b>-f</b>  make errors fatal
+<b>-p</b>  pretty print error/warning output
+<b>-q</b>  redirect <b>stdout</b> and <b>stderr</b> to <b>&quot;/dev/null&quot;</b>
+<b>-r</b>  ignore <b>--dryrun</b>
+<b>-s</b>  capture output to string
+<b>-t</b>  do not run after previous error
+<b>-w</b>  output a warning on error
+<b>-z</b>  capture <b>stderr</b> only. do not interfere with <b>stdout</b></div>
+</div>
+<div class='def-row'>
+<div class='def-label'>Arguments:</div>
+<div class='def-text'><i>tool</i>  external or builtin command to use
+<i>arg</i>   arguemnts for <i>tool</i>
+<i>deli</i>  ...
+<i>vnam</i>  name of a string or array variable</div>
+</div>
+<div class='def-row'>
+<div class='def-label'>Notes:</div>
+<div class='def-block'>mini-bash-lib not explicitly support bash loadables. So <b>system</b> makes no difference beween builtin are external commands.</div>
+</div>
+<div class='def-break'></div>
+<div class='def-row'>
+<div class='def-empty'></div>
+<div class='def-block'><b>system</b> cannot by used recursively, so better don&apos;t call functions.</div>
+</div>
+<div class='def-break'></div>
+<div class='def-row'>
+<div class='def-empty'></div>
+<div class='def-block'>While centauri-bash-lib uses <b>&quot;$(...)&quot;</b> to run a command mini-bash-lib redirects to a temporary file (like <b>sysrun</b> of centaur-bash-lib does). This avoids the overhead of a sub-shell but prevents recursive use.</div>
+</div>
+<div class='def-row'>
+<div class='def-label'>Return:</div>
+<div class='def-text'><b>true</b> on success  -or-  <b>false</b> otherwise</div>
+</div>
+</section>
+<section id='section-27'>
+<div id='tmpfile' class='item-function'>
+<span>Function</span><span> - </span><span>tmpfile</span><span> - </span><span>create a temporary file that get deleted by quit</span></div>
+<div class='def-row'>
+<div class='def-label'>Call:</div>
+<div class='def-text'><b>tmpfile</b> [<b>-n</b>] [<b>-r</b>] [<b>-s</b> <i>vnam</i>]</div>
+</div>
+<div class='def-row'>
+<div class='def-label'>Options:</div>
+<div class='def-text'><b>-n</b>  do not actually create a file, return path only
+<b>-r</b>  ignore <b>--dryrun</b>
+<b>-s</b>  save path to given variable, default is <b>CEN_TEMPFILE</b></div>
+</div>
+<div class='def-row'>
+<div class='def-label'>Arguments:</div>
+<div class='def-text'><i>vnam</i>  name of a variable to receive the path</div>
+</div>
+<div class='def-row'>
+<div class='def-label'>Return:</div>
+<div class='def-text'><b>true</b> on success  -or-  <b>false</b> otherwise</div>
+</div>
+<div class='def-row'>
+<div class='def-label'>Remarks:</div>
+<div class='def-block'>At program exit the <a href="#quit">quit()</a> function recursively deletes all temporary objects that have a path obtained from <b>tmpfile</b>().</div>
+</div>
+</section>
+<section id='section-28'>
+<div id='trace' class='item-function'>
+<span>Function</span><span> - </span><span>trace</span><span> - </span><span>Write a trace message to stderr output</span></div>
+<div class='def-row'>
+<div class='def-label'>Call:</div>
+<div class='def-text'><b>trace</b> [<b>-a</b>|<b>-i</b>] [<b>-c</b> <i>labl</i>] [<b>-m</b>|<b>-p</b>] [<b>--</b>] <i>text</i>...</div>
+</div>
+<div class='def-row'>
+<div class='def-label'>Options:</div>
+<div class='def-text'><b>-a</b>  auto-indent (e.g. do not print the script name)
+<b>-c</b>  start with an 18 char fixed size label field
+<b>-i</b>  always indent
+<b>-m</b>  multi-line output (one line per <i>text</i> argument)
+<b>-p</b>  printf formatting (1st <i>text</i> arg. is format)</div>
+</div>
+<div class='def-row'>
+<div class='def-label'>Arguments:</div>
+<div class='def-text'><i>labl</i>  label field text (field width is 18 chars)
+<i>text</i>  Any text to be output</div>
+</div>
+<div class='def-row'>
+<div class='def-label'>Return:</div>
+<div class='def-text'><b>true</b> on success</div>
+</div>
+</section>
+<section id='section-29'>
+<div id='warning' class='item-function'>
+<span>Function</span><span> - </span><span>warning</span><span> - </span><span>Write a warning message to stderr output</span></div>
+<div class='def-row'>
+<div class='def-label'>Call:</div>
+<div class='def-text'><b>warning</b> [<b>-a</b>|<b>-i</b>] [<b>-m</b>|<b>-p</b>] [<b>--</b>] <i>text</i>...</div>
+</div>
+<div class='def-row'>
+<div class='def-label'>Options:</div>
+<div class='def-text'><b>-a</b>  auto-indent (e.g. do not print the script name)
+<b>-i</b>  always indent
+<b>-m</b>  multi-line output (one line per <i>text</i> argument)
+<b>-p</b>  printf formatting (1st <i>text</i> arg. is format)</div>
+</div>
+<div class='def-row'>
+<div class='def-label'>Arguments:</div>
+<div class='def-text'><i>text</i>  Any text to be output</div>
+</div>
+<div class='def-row'>
+<div class='def-label'>Return:</div>
+<div class='def-text'><b>true</b> on success</div>
+</div>
+</section>
+<section id='section-30'>
+<div id='quit' class='item-function'>
+<span>Function</span><span> - </span><span>quit</span><span> - </span><span>terminate application, remove temporary files</span></div>
+<div class='def-row'>
+<div class='def-label'>Call:</div>
+<div class='def-text'><b>quit</b> [<b>-a</b>|<b>-i</b>] [<b>-e</b>] [<b>-m</b>|<b>-p</b>] [<b>-s</b> <i>code</i>] [<b>-t</b>] [<b>--</b>] <i>text</i>...</div>
+</div>
+<div class='def-row'>
+<div class='def-label'>Options:</div>
+<div class='def-text'><b>-a</b>  auto-indent (e.g. do not print the script name)
+<b>-e</b>
+<b>-i</b>  always indent
+<b>-m</b>  multi-line output (one line per <i>text</i> argument)
+<b>-p</b>  printf formatting (1st <i>text</i> arg. is format)
+<b>-s</b>
+<b>-t</b></div>
+</div>
+<div class='def-row'>
+<div class='def-label'>Arguments:</div>
+<div class='def-text'><i>code</i>  application exit code
+<i>text</i>  Any text to be output</div>
+</div>
+<div class='def-row'>
+<div class='def-label'>Return:</div>
+<div class='def-text'>...</div>
+</div>
+</section>
+<section id='section-31'>
+<div id='usagecat' class='item-function'>
+<span>Function</span><span> - </span><span>usagecat</span><span> - </span><span>copy usage text to stdout</span></div>
+<div class='def-row'>
+<div class='def-label'>Call:</div>
+<div class='def-text'><b>usagecat</b> [<b>-l</b>]</div>
+</div>
+<div class='def-row'>
+<div class='def-label'>Options:</div>
+<div class='def-text'><b>-l</b>  literal output</div>
+</div>
+<div class='def-row'>
+<div class='def-label'>Note:</div>
+<div class='def-block'>This implementation only changes the <b>&quot;degree&quot;</b> character to space and fixes indentation.</div>
+</div>
+<div class='def-row'>
+<div class='def-label'>Return:</div>
+<div class='def-text'><b>true</b> on success</div>
+</div>
+</section>
+</article>
+<div class='def-break'></div>
+<nav><div class='nav-row'>
+<div class='nav-left'></div>
+<div class='nav-mid'><a href='#top'>[Top of Page]</a></div>
+<div class='nav-mid'><a href='reference.html#top'>[Reference]</a></div>
+<div class='nav-right'></div>
+</div></nav>
+</body></html>
