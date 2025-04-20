@@ -15,12 +15,12 @@
 <span>Topic</span><span> - </span><span>content</span><span> - </span><span>Documentation</span></div>
 <div class='def-row'>
 <div class='def-label'>About:</div>
-<div class='def-block'>This is text documents mini-bash-lib, a framework for writing bash scripts.</div>
+<div class='def-block'>This text documents mini-bash-lib, a framework for writing bash scripts.</div>
 </div>
 <div class='def-break'></div>
 <div class='def-row'>
 <div class='def-empty'></div>
-<div class='def-block'>A script is usually a single file that does embed the library code or loads the library at start-up time. The basic mini-bash-lib itself is contained in a single file. The size is about 10 kByte in 400 lines of code.</div>
+<div class='def-block'>A script is usually a single file that does embed the library code or loads the library at start-up time. The basic mini-bash-lib itself is contained in a single file. The size is about 11 kByte in 400 lines of code.</div>
 </div>
 <div class='def-row'>
 <div class='def-label'>Content:</div>
@@ -77,7 +77,7 @@
 <div class='def-empty'></div>
 <div class='def-text'>  • it can be used simplify scripting and to support debugging
   • it demonstrates some of the main design goals of centauri-bash-lib:
-    framework: here only some option parsing, <a href="#run">run</a>() and <a href="#usage">usage</a>()
+    framework (here only some option parsing), <a href="#run">run</a>() and <a href="#usage">usage</a>()
     debug support: options <b>-t</b>|<b>--trace</b> and <b>-d</b>|<b>--dryrun</b>, <a href="#trace">trace()</a>
   • error handling: <a href="#error">error()</a>, <a href="#fatal">fatal()</a>, <a href="#quit">quit()</a>, <a href="#system">system()</a> to run commands
   • simplify programming: <a href="#folder">folder()</a>, <a href="#splitjoin">splitjoin()</a>, <a href="#symlink">symlink()</a>, <a href="#confirm">confirm()</a>
@@ -107,12 +107,13 @@
 <a href="#system">system</a>      [<b>-a</b>|<b>-s</b> <i>vnam</i>] [<b>-c</b>] [<b>-d</b> <i>deli</i>] [<b>-e</b>|<b>-f</b>|<b>-q</b>|<b>-t</b>|<b>-w</b>] [<b>-p</b>] [<b>-r</b>] [<b>-z</b>] [<b>--</b>] <i>tool</i> <i>arg</i>...
 <a href="#tmpfile">tmpfile</a>     [<b>-n</b>] [<b>-r</b>] [<b>-s</b> <i>vnam</i>]
 <a href="#trace">trace</a>       [<b>-a</b>|<b>-i</b>] [<b>-c</b> <i>labl</i>] [<b>-m</b>|<b>-p</b>] [<b>--</b>] <i>text</i>...
+<a href="#usagecat">usagecat</a>    [<b>-l</b>]
 <a href="#warning">warning</a>     [<b>-a</b>|<b>-i</b>] [<b>-m</b>|<b>-p</b>] [<b>--</b>] <i>text</i>...
 <a href="#quit">quit</a>        [<b>-a</b>|<b>-i</b>] [<b>-e</b>|<b>-t</b>|<b>-u</b>] [<b>-m</b>|<b>-p</b>] [<b>-s</b> <i>code</i>] [<b>--</b>] <i>text</i>...</div>
 </div>
 <div class='def-row'>
 <div class='def-label'>General:</div>
-<div class='def-block'>The order of options is not relevant, &apos;<b>--</b>&apos; terminates the option list (if not used and the next argument starts with a &apos;-&apos; that argument would by parsed as an option).</div>
+<div class='def-block'>The order of options is not relevant, &apos;<b>--</b>&apos; or &apos;---&apos; terminate the option list (if not used and the next argument starts with a &apos;-&apos; that argument would by parsed as an option).</div>
 </div>
 <div class='def-break'></div>
 <div class='def-row'>
@@ -122,7 +123,7 @@
 <div class='def-break'></div>
 <div class='def-row'>
 <div class='def-empty'></div>
-<div class='def-block'>Intentionally unknown function options are not causing an abort and stack trace like in centauri-bash-lib, see <a href="#coexistence">coexistence</a>.</div>
+<div class='def-block'>Unlike in centauri-bash-lib unknown function options are not causing an abort and stack trace, see <a href="#coexistence">coexistence</a>. This is intended, not a bug.</div>
 </div>
 </section>
 <section id='section-3'>
@@ -294,16 +295,12 @@ ln <b>-s</b> /usr/share/src/mini-bash-lib/_mini_bash_lib .</pre></div>
 <div id='gettext' class='item-topic'>
 <span>Topic</span><span> - </span><span>gettext</span><span> - </span><span>Internationalization using GNU gettext</span></div>
 <div class='def-row'>
-<div class='def-label'>Bla:</div>
-<div class='def-block'>bla bla</div>
-</div>
-<div class='def-row'>
-<div class='def-label'>Bla:</div>
-<div class='def-block'>bla bla</div>
+<div class='def-label'>mini10:</div>
+<div class='def-block'>The folder &apos;locale&apos; and its sub-folders contain stuff for GNU <b>gettext</b> and the mini10 tool. This tools can be used to extract $<b>&quot;...&quot;</b> strings from bash source and to run the GNU tools.</div>
 </div>
 <div class='def-row'>
 <div class='def-label'>Remarks:</div>
-<div class='def-block'>bla</div>
+<div class='def-block'>Internationalization can only be used with the &apos;_mini_bash_lib&apos; proxy. The proxy sets the required bash variables to load the translations created by mini10.</div>
 </div>
 </section>
 <section id='section-7'>
@@ -344,11 +341,25 @@ ln <b>-s</b> /usr/share/src/mini-bash-lib/_mini_bash_lib .</pre></div>
 <span>Topic</span><span> - </span><span>options</span><span> - </span><span>Callback: Command Line Option Parser</span></div>
 <div class='def-row'>
 <div class='def-label'>Purpose:</div>
-<div class='def-block'>bla</div>
+<div class='def-block'>Handle the parsing and validation of command line arguemnts</div>
+</div>
+<div class='def-row'>
+<div class='def-label'>Remarks:</div>
+<div class='def-block'>This function is called for each command line option with the option and the optional option arguemt as parameters. After this the function gets called again without parameters to signal the end of option processing.</div>
+</div>
+<div class='def-break'></div>
+<div class='def-row'>
+<div class='def-empty'></div>
+<div class='def-block'>The framework will remove all parsed <b>options</b> from the argument list that get passed to <a href="#run">run</a>().</div>
+</div>
+<div class='def-break'></div>
+<div class='def-row'>
+<div class='def-empty'></div>
+<div class='def-block'>A typical implementation will use a <b>&quot;case&quot;</b> statement and call <a href="#optarg">optarg()</a> for each option. Any error will cause the framework not to call <a href="#run">run</a>().</div>
 </div>
 <div class='def-row'>
 <div class='def-label'>Important:</div>
-<div class='def-block'><b>DO NOT</b> &apos;exit&apos; or quit</div>
+<div class='def-block'><b>DO NOT</b> &apos;exit&apos; or quit from inside this function</div>
 </div>
 </section>
 <section id='section-9'>
@@ -356,11 +367,35 @@ ln <b>-s</b> /usr/share/src/mini-bash-lib/_mini_bash_lib .</pre></div>
 <span>Topic</span><span> - </span><span>quit_hook</span><span> - </span><span>Callback: Cleaning up before Termination</span></div>
 <div class='def-row'>
 <div class='def-label'>Purpose:</div>
-<div class='def-block'>bla</div>
+<div class='def-block'>Allows a script funtion to be called when terminating.</div>
+</div>
+<div class='def-row'>
+<div class='def-label'>Notes:</div>
+<div class='def-block'>This <b>CEN_HOOK_QUIT</b> implementation is centauri-bash-lib compatible but receives a different set of arguments. In mini-bash-lib all <a href="#quit">quit()</a> arguemnts are passed, which is not the case for centauri-bash-lib.</div>
+</div>
+<div class='def-break'></div>
+<div class='def-row'>
+<div class='def-empty'></div>
+<div class='def-block'>It is important to call the next entry of the hook chain from your hook function so that temporary files get removed at the end.</div>
+</div>
+<div class='def-break'></div>
+<div class='def-row'>
+<div class='def-empty'></div>
+<div class='def-block'>Before doing &apos;exec&apos; (mini-bash-lib does not implement <a href="#system">system()</a> option <b>-x</b>) you should call the hook chain (without arguments) to remove temporary files.</div>
+</div>
+<div class='def-row'>
+<div class='def-label'>Example:</div>
+<div class='def-text'><pre>cleanup() {
+   # ...                       # custom cleanup code
+   $<b>DAT_QUIT_CALL</b> <b>&quot;$@&quot;</b>         # call next in hook chain
+}
+
+<b>DAT_QUIT_CALL</b>=<b>&quot;$CEN_HOOK_QUIT&quot;</b>  # save head of hook chain
+<b>CEN_HOOK_QUIT</b>=&apos;cleanup&apos;         # quit hook function</pre></div>
 </div>
 <div class='def-row'>
 <div class='def-label'>Important:</div>
-<div class='def-block'><b>DO NOT</b> &apos;exit&apos; or quit</div>
+<div class='def-block'><b>DO NOT</b> &apos;exit&apos; or quit from inside this function</div>
 </div>
 </section>
 <section id='section-10'>
@@ -368,11 +403,28 @@ ln <b>-s</b> /usr/share/src/mini-bash-lib/_mini_bash_lib .</pre></div>
 <span>Topic</span><span> - </span><span>usage</span><span> - </span><span>Callback: Implement Option --help</span></div>
 <div class='def-row'>
 <div class='def-label'>Purpose:</div>
-<div class='def-block'>bla</div>
+<div class='def-block'>Show a brief <b>usage</b> summary, see <a href="#usagecat">usagecat()</a>.</div>
+</div>
+<div class='def-row'>
+<div class='def-label'>Remark:</div>
+<div class='def-block'>The functions is optional and only called by the framework if implemented. Simple formatting is compatible with centauri-bash-lib&apos;s centaurihelp.</div>
+</div>
+<div class='def-row'>
+<div class='def-label'>Example:</div>
+<div class='def-text'><pre><b>usage</b>() {
+    usagecat &lt;&lt;!EOF
+Usage:  $<b>CEN_NAME</b> ...
+
+        $<b>CEN_TITLE</b>
+
+Note:   See implementations in tools of the mini-bash-lib source.
+
+!EOF
+}</pre></div>
 </div>
 <div class='def-row'>
 <div class='def-label'>Important:</div>
-<div class='def-block'><b>DO NOT</b> &apos;exit&apos; or quit</div>
+<div class='def-block'><b>DO NOT</b> &apos;exit&apos; or quit from inside this function</div>
 </div>
 </section>
 <section id='section-11'>
@@ -847,8 +899,17 @@ done</pre></div>
 <div class='def-label'>Arguments:</div>
 <div class='def-text'><i>tool</i>  external or builtin command to use
 <i>arg</i>   arguemnts for <i>tool</i>
-<i>deli</i>  ...
+<i>deli</i>  word/line delimiter, C-style syntax
 <i>vnam</i>  name of a string or array variable</div>
+</div>
+<div class='def-row'>
+<div class='def-label'>Splitting:</div>
+<div class='def-block'>With option <b>-a</b> the <i>tool</i> output the output lines are returned as an array. By default empty lines are ignored, uses <b>-d</b> &apos;<b>--</b>&apos; to return empty lines too.</div>
+</div>
+<div class='def-break'></div>
+<div class='def-row'>
+<div class='def-empty'></div>
+<div class='def-block'><b>currently option -d is not implemented, except -d &apos;--&apos;.</b></div>
 </div>
 <div class='def-row'>
 <div class='def-label'>Notes:</div>
@@ -982,8 +1043,13 @@ done</pre></div>
 <div class='def-text'><b>-l</b>  literal output</div>
 </div>
 <div class='def-row'>
-<div class='def-label'>Note:</div>
-<div class='def-block'>This implementation only changes the <b>&quot;degree&quot;</b> character to space and fixes indentation.</div>
+<div class='def-label'>Notes:</div>
+<div class='def-block'>This implementation changes the <b>&quot;degree&quot;</b> character to space and fixes indentation so that simple formatting is compatible with centauri-bash-lib&apos;s <b>centaurihelp</b>.</div>
+</div>
+<div class='def-break'></div>
+<div class='def-row'>
+<div class='def-empty'></div>
+<div class='def-text'>There is no support for internationalization.</div>
 </div>
 <div class='def-row'>
 <div class='def-label'>Return:</div>

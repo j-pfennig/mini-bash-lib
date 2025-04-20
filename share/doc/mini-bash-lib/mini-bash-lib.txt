@@ -1,11 +1,13 @@
+Note: you can use 'less -R ...' to read this text
+
 ──────────────────────────────────────────────────────────────────────────────────────────────
 [1mTopic - content -[0m [1mDocumentation[0m
 ──────────────────────────────────────────────────────────────────────────────────────────────
-[1mAbout:     [0mThis is text documents mini-bash-lib, a framework for writing bash scripts.
+[1mAbout:     [0mThis text documents mini-bash-lib, a framework for writing bash scripts.
 
            A script is usually a single file that does embed the library code or loads the
            library at start-up time. The basic mini-bash-lib itself is contained in a single
-           file. The size is about 10 kByte in 400 lines of code.
+           file. The size is about 11 kByte in 400 lines of code.
 
 [1mContent:   [0m
            • [4mmini bash lib[0m   Introduction and list of implemented functions
@@ -41,7 +43,7 @@
 
            • it can be used simplify scripting and to support debugging
            • it demonstrates some of the main design goals of centauri-bash-lib:
-               framework: here only some option parsing, [4mrun[0m() and [4musage[0m()
+               framework (here only some option parsing), [4mrun[0m() and [4musage[0m()
                debug support: options [1m-t[0m|[1m--trace[0m and [1m-d[0m|[1m--dryrun[0m, [4mtrace()[0m
            • error handling: [4merror()[0m, [4mfatal()[0m, [4mquit()[0m, [4msystem()[0m to run commands
            • simplify programming: [4mfolder()[0m, [4msplitjoin()[0m, [4msymlink()[0m, [4mconfirm()[0m
@@ -66,19 +68,20 @@
            [4msystem[0m      [[1m-a[0m|[1m-s[0m [3mvnam[0m] [[1m-c[0m] [[1m-d[0m [3mdeli[0m] [[1m-e[0m|[1m-f[0m|[1m-q[0m|[1m-t[0m|[1m-w[0m] [[1m-p[0m] [[1m-r[0m] [[1m-z[0m] [[1m--[0m] [3mtool[0m [3marg[0m...
            [4mtmpfile[0m     [[1m-n[0m] [[1m-r[0m] [[1m-s[0m [3mvnam[0m]
            [4mtrace[0m       [[1m-a[0m|[1m-i[0m] [[1m-c[0m [3mlabl[0m] [[1m-m[0m|[1m-p[0m] [[1m--[0m] [3mtext[0m...
+           [4musagecat[0m    [[1m-l[0m]
            [4mwarning[0m     [[1m-a[0m|[1m-i[0m] [[1m-m[0m|[1m-p[0m] [[1m--[0m] [3mtext[0m...
            [4mquit[0m        [[1m-a[0m|[1m-i[0m] [[1m-e[0m|[1m-t[0m|[1m-u[0m] [[1m-m[0m|[1m-p[0m] [[1m-s[0m [3mcode[0m] [[1m--[0m] [3mtext[0m...
 
-[1mGeneral:   [0mThe order of options is not relevant, '[1m--[0m' terminates the option list (if not used
-           and the next argument starts with a '-' that argument would by parsed as an
-           option).
+[1mGeneral:   [0mThe order of options is not relevant, '[1m--[0m' or '---' terminate the option list (if
+           not used and the next argument starts with a '-' that argument would by parsed as
+           an option).
 
            Function options are always a hyphen followed by a single letter. Arguments must be
            a separate word. The command line parser, see [4moptions[0m(), and function options are
            separate implementations.
 
-           Intentionally unknown function options are not causing an abort and stack trace
-           like in centauri-bash-lib, see [4mcoexistence[0m.
+           Unlike in centauri-bash-lib unknown function options are not causing an abort and
+           stack trace, see [4mcoexistence[0m. This is intended, not a bug.
 
 ──────────────────────────────────────────────────────────────────────────────────────────────
 [1mTopic - coexistence -[0m [1mUsing mini-bash-lib script with centauri-bash-lib installed[0m
@@ -196,11 +199,12 @@
 ──────────────────────────────────────────────────────────────────────────────────────────────
 [1mTopic - gettext -[0m [1mInternationalization using GNU gettext[0m
 ──────────────────────────────────────────────────────────────────────────────────────────────
-[1mBla:       [0mbla bla
+[1mmini10:    [0mThe folder 'locale' and its sub-folders contain stuff for GNU [1mgettext[0m and the
+           mini10 tool. This tools can be used to extract $[1m"..."[0m strings from bash source and
+           to run the GNU tools.
 
-[1mBla:       [0mbla bla
-
-[1mRemarks:   [0mbla
+[1mRemarks:   [0mInternationalization can only be used with the '_mini_bash_lib' proxy. The proxy
+           sets the required bash variables to load the translations created by mini10.
 
 ──────────────────────────────────────────────────────────────────────────────────────────────
 [1mTopic - main -[0m [1mCallback: Invoking the framework, option parsing[0m
@@ -231,23 +235,65 @@
 ──────────────────────────────────────────────────────────────────────────────────────────────
 [1mTopic - options -[0m [1mCallback: Command Line Option Parser[0m
 ──────────────────────────────────────────────────────────────────────────────────────────────
-[1mPurpose:   [0mbla
+[1mPurpose:   [0mHandle the parsing and validation of command line arguemnts
 
-[1mImportant: [0m[1mDO NOT[0m 'exit' or quit
+[1mRemarks:   [0mThis function is called for each command line option with the option and the
+           optional option arguemt as parameters. After this the function gets called again
+           without parameters to signal the end of option processing.
+
+           The framework will remove all parsed [1moptions[0m from the argument list that get passed
+           to [4mrun[0m().
+
+           A typical implementation will use a [1m"case"[0m statement and call [4moptarg()[0m for each
+           option. Any error will cause the framework not to call [4mrun[0m().
+
+[1mImportant: [0m[1mDO NOT[0m 'exit' or quit from inside this function
 
 ──────────────────────────────────────────────────────────────────────────────────────────────
 [1mTopic - quit_hook -[0m [1mCallback: Cleaning up before Termination[0m
 ──────────────────────────────────────────────────────────────────────────────────────────────
-[1mPurpose:   [0mbla
+[1mPurpose:   [0mAllows a script funtion to be called when terminating.
 
-[1mImportant: [0m[1mDO NOT[0m 'exit' or quit
+[1mNotes:     [0mThis [1mCEN_HOOK_QUIT[0m implementation is centauri-bash-lib compatible but receives a
+           different set of arguments. In mini-bash-lib all [4mquit()[0m arguemnts are passed, which
+           is not the case for centauri-bash-lib.
+
+           It is important to call the next entry of the hook chain from your hook function so
+           that temporary files get removed at the end.
+
+           Before doing 'exec' (mini-bash-lib does not implement [4msystem()[0m option [1m-x[0m) you
+           should call the hook chain (without arguments) to remove temporary files.
+
+[1mExample:   [0m┃ cleanup() {
+           ┃    # ...                       # custom cleanup code
+           ┃    $[1mDAT_QUIT_CALL[0m [1m"$@"[0m         # call next in hook chain
+           ┃ }
+           ┃ 
+           ┃ [1mDAT_QUIT_CALL[0m=[1m"$CEN_HOOK_QUIT"[0m  # save head of hook chain
+           ┃ [1mCEN_HOOK_QUIT[0m='cleanup'         # quit hook function
+
+[1mImportant: [0m[1mDO NOT[0m 'exit' or quit from inside this function
 
 ──────────────────────────────────────────────────────────────────────────────────────────────
 [1mTopic - usage -[0m [1mCallback: Implement Option --help[0m
 ──────────────────────────────────────────────────────────────────────────────────────────────
-[1mPurpose:   [0mbla
+[1mPurpose:   [0mShow a brief [1musage[0m summary, see [4musagecat()[0m.
 
-[1mImportant: [0m[1mDO NOT[0m 'exit' or quit
+[1mRemark:    [0mThe functions is optional and only called by the framework if implemented. Simple
+           formatting is compatible with centauri-bash-lib's centaurihelp.
+
+[1mExample:   [0m┃ [1musage[0m() {
+           ┃     usagecat <<!EOF
+           ┃ Usage:  $[1mCEN_NAME[0m ...
+           ┃ 
+           ┃         $[1mCEN_TITLE[0m
+           ┃ 
+           ┃ Note:   See implementations in tools of the mini-bash-lib source.
+           ┃ 
+           ┃ !EOF
+           ┃ }
+
+[1mImportant: [0m[1mDO NOT[0m 'exit' or quit from inside this function
 
 ──────────────────────────────────────────────────────────────────────────────────────────────
 [1mTopic - run -[0m [1mCallback: run the Payload Part of a Script[0m
@@ -554,8 +600,13 @@
 
 [1mArguments: [0m[3mtool[0m  external or builtin command to use
            [3marg[0m   arguemnts for [3mtool[0m
-           [3mdeli[0m  ...
+           [3mdeli[0m  word/line delimiter, C-style syntax
            [3mvnam[0m  name of a string or array variable
+
+[1mSplitting: [0mWith option [1m-a[0m the [3mtool[0m output the output lines are returned as an array. By
+           default empty lines are ignored, uses [1m-d[0m '[1m--[0m' to return empty lines too.
+
+           [1mcurrently option -d is not implemented, except -d '--'.[0m
 
 [1mNotes:     [0mmini-bash-lib not explicitly support bash loadables. So [1msystem[0m makes no difference
            beween builtin are external commands.
@@ -639,8 +690,10 @@
 
 [1mOptions:   [0m[1m-l[0m  literal output
 
-[1mNote:      [0mThis implementation only changes the [1m"degree"[0m character to space and fixes
-           indentation.
+[1mNotes:     [0mThis implementation changes the [1m"degree"[0m character to space and fixes indentation
+           so that simple formatting is compatible with centauri-bash-lib's [1mcentaurihelp[0m.
+
+           There is no support for internationalization.
 
 [1mReturn:    [0m[1mtrue[0m on success
 

@@ -33,11 +33,11 @@
 # ------------------------------------------------------------------------------
 # content + Documentation
 #
-#+About: This is text documents mini-bash-lib, a framework for writing bash scripts.
+#+About: This text documents mini-bash-lib, a framework for writing bash scripts.
 #
 #+      A script is usually a single file that does embed the library code or loads
 #       the library at start-up time. The basic mini-bash-lib itself is contained in
-#       a single file. The size is about 10 kByte in 400 lines of code.
+#       a single file. The size is about 11 kByte in 400 lines of code.
 #
 # Content:
 #,      - [[mini°bash°lib]]   Introduction and list of implemented functions
@@ -74,7 +74,7 @@
 #
 #,      - it can be used simplify scripting and to support debugging
 #,      - it demonstrates some of the main design goals of centauri-bash-lib:
-#,      ° framework: here only some option parsing, [[run]]() and [[usage]]()
+#,      ° framework (here only some option parsing), [[run]]() and [[usage]]()
 #,      ° debug support: options -t|--trace and -d|--dryrun, [[trace()]]
 #,      - error handling: [[error()]], [[fatal()]], [[quit()]], [[system()]] to run commands
 #,      - simplify programming: [[folder()]], [[splitjoin()]], [[symlink()]], [[confirm()]]
@@ -101,19 +101,20 @@
 #       [[system]]      [-a|-s <vnam>] [-c] [-d <deli>] [-e|-f|-q|-t|-w] [-p] [-r] [-z] [--] <tool> <arg>...
 #       [[tmpfile]]     [-n] [-r] [-s <vnam>]
 #       [[trace]]       [-a|-i] [-c <labl>] [-m|-p] [--] <text>...
+#       [[usagecat]]    [-l]
 #       [[warning]]     [-a|-i] [-m|-p] [--] <text>...
 #       [[quit]]        [-a|-i] [-e|-t|-u] [-m|-p] [-s <code>] [--] <text>...
 #
-#+General: The order of options is not relevant, '--' terminates the option
-#       list (if not used and the next argument starts with a '-' that
+#+General: The order of options is not relevant, '--' or '---' terminate the
+#       option list (if not used and the next argument starts with a '-' that
 #       argument would by parsed as an option).
 #
 #+      Function options are always a hyphen followed by a single letter.
 #       Arguments must be a separate word. The command line parser, see
 #       [[options]](), and function options are separate implementations.
 #
-#+      Intentionally unknown function options are not causing an abort
-#       and stack trace like in centauri-bash-lib, see [[coexistence]].
+#+      Unlike in centauri-bash-lib unknown function options are not causing an
+#       abort and stack trace, see [[coexistence]]. This is intended, not a bug.
 # ------------------------------------------------------------------------------
 
 # ------------------------------------------------------------------------------
@@ -237,11 +238,13 @@
 # ------------------------------------------------------------------------------
 # gettext + Internationalization using GNU gettext
 #
-#+Bla: bla bla
+#+mini10: The folder 'locale' and its sub-folders contain stuff for GNU gettext
+#         and the mini10 tool. This tools can be used to extract $"..." strings
+#         from bash source and to run the GNU tools.
 #
-#+Bla: bla bla
-#
-# bla
+#+Internationalization can only be used with the '_mini_bash_lib' proxy. The
+# proxy sets the required bash variables to load the translations created by
+# mini10.
 # ------------------------------------------------------------------------------
 
 # ------------------------------------------------------------------------------
@@ -274,25 +277,69 @@
 # ------------------------------------------------------------------------------
 # options + Callback: Command Line Option Parser
 #
-#+Purpose: bla
+#+Purpose: Handle the parsing and validation of command line arguemnts
 #
-#+Important: **DO NOT** 'exit' or quit
+#+This function is called for each command line option with the option and
+# the optional option arguemt as parameters. After this the function gets
+# called again without parameters to signal the end of option processing.
+#
+#+The framework will remove all parsed options from the argument list that
+# get passed to [[run]]().
+#
+#+A typical implementation will use a "case" statement and call [[optarg()]]
+# for each option. Any error will cause the framework not to call [[run]]().
+#
+#+Important: **DO NOT** 'exit' or quit from inside this function
 # ------------------------------------------------------------------------------
 
 # ------------------------------------------------------------------------------
 # quit_hook + Callback: Cleaning up before Termination
 #
-#+Purpose: bla
+#+Purpose: Allows a script funtion to be called when terminating.
 #
-#+Important: **DO NOT** 'exit' or quit
+#+Notes:   This CEN_HOOK_QUIT implementation is centauri-bash-lib compatible
+#          but receives a different set of arguments. In mini-bash-lib all
+#          [[quit()]] arguemnts are passed, which is not the case for
+#          centauri-bash-lib.
+#
+#+         It is important to call the next entry of the hook chain from
+#          your hook function so that temporary files get removed at the end.
+#
+#+         Before doing 'exec' (mini-bash-lib does not implement [[system()]]
+#          option -x) you should call the hook chain (without arguments) to
+#          remove temporary files.
+#
+#.Example: cleanup() {
+#.             # ...                       # custom cleanup code
+#.             $DAT_QUIT_CALL "$@"         # call next in hook chain
+#.         }
+#.
+#.         DAT_QUIT_CALL="$CEN_HOOK_QUIT"  # save head of hook chain
+#.         CEN_HOOK_QUIT='cleanup'         # quit hook function
+#
+#+Important: **DO NOT** 'exit' or quit from inside this function
 # ------------------------------------------------------------------------------
 
 # ------------------------------------------------------------------------------
 # usage + Callback: Implement Option --help
 #
-#+Purpose: bla
+#+Purpose: Show a brief usage summary, see [[usagecat()]].
 #
-#+Important: **DO NOT** 'exit' or quit
+#+The functions is optional and only called by the framework if implemented.
+# Simple formatting is compatible with centauri-bash-lib's centaurihelp.
+#
+#.Example:  usage() {
+#.              usagecat <<!EOF
+#.          Usage:  $CEN_NAME ...
+#.
+#.                  $CEN_TITLE
+#.
+#.          Note:   See implementations in tools of the mini-bash-lib source.
+#.
+#.          !EOF
+#.          }
+#
+#+Important: **DO NOT** 'exit' or quit from inside this function
 # ------------------------------------------------------------------------------
 
 # ------------------------------------------------------------------------------
@@ -615,11 +662,17 @@
 #
 # Arguments:<tool>  external or builtin command to use
 #           <arg>   arguemnts for <tool>
-#           <deli>  ...
+#           <deli>  word/line delimiter, C-style syntax
 #           <vnam>  name of a string or array variable
 #
-#+Notes:    mini-bash-lib not explicitly support bash loadables. So system makes
-#           no difference beween builtin are external commands.
+#+Splitting:With option -a the <tool> output the output lines are returned as an
+#           array. By default empty lines are ignored, uses -d '--' to return
+#           empty lines too.
+#
+#+          **currently option -d is not implemented, except -d '--'.**
+#
+#+Notes:    mini-bash-lib does not explicitly support bash loadables. So system
+#           makes no difference beween builtin are external commands.
 #
 #+          system cannot by used recursively, so better don't call functions.
 #
@@ -705,8 +758,11 @@
 #
 # Options:  -l  literal output
 #
-#+Note:     This implementation only changes the "degree" character to space and
-#           fixes indentation.
+#+Notes:    This implementation changes the "degree" character to space and
+#           fixes indentation so that simple formatting is compatible with
+#           centauri-bash-lib's **centaurihelp**.
+#
+#           There is no support for internationalization.
 #
 # Return:   **true** on success
 # ------------------------------------------------------------------------------
@@ -716,6 +772,7 @@
 # ------------------------------------------------------------------------------
 if [ -z "$CEN_HOOK_MESSAGE" ] ; then    # centauri-bash-lib not loaded ...
 
+# shellcheck disable=SC2102
 # shellcheck disable=SC2317
 {
 # shellcheck disable=SC2034
@@ -724,12 +781,12 @@ if [ -z "$CEN_HOOK_MESSAGE" ] ; then    # centauri-bash-lib not loaded ...
     CEN_STDERR=42
     eval exec "$CEN_STDOUT>&1" "$CEN_STDERR>&2"
 
-    CEN_EXIT=0              # exit code
+    CEN_EXIT=0                  # exit code
     CEN_HOOK_MESSAGE='message'
-    CEN_HOOK_QUIT=          # called by quit()
-    CEN_IDNT=               # Flag for indentation
-    CEN_MINI_VERSION='0.05'
-    : ${CEN_VERSION:=$CEN_MINI_VERSION}
+    CEN_HOOK_QUIT='_cen_quit'   # called by quit()
+    CEN_IDNT=                   # Flag for indentation
+    CEN_MINI_VERSION='0.06'
+    : "${CEN_VERSION:=$CEN_MINI_VERSION}"
 
     CEN_ARGS=               # option arg count  (0:=error  1:=flag only  2:has value)
     CEN_ARGOPT=             # potential option argument
@@ -937,6 +994,7 @@ folder() {
     done
     if [ ! -d "$1" ] ; then
         if [ -n "$_omak" ] ; then
+            # shellcheck disable=SC2086
             system $_oopt -- mkdir -p "$1" || return 1
         else
             $_oerr $"Not a folder:" "$1" ; return 1
@@ -944,6 +1002,7 @@ folder() {
     fi
     [ -z "$_ochg" ] && return 0
     # using 'system eval cd ..' to simplify error handling
+    # shellcheck disable=SC2086
     system -r $_oopt -- eval "$_ochg" "$1" || return 1
     trace -a -c $"Current folder" "$PWD" ; return 0
 }
@@ -978,7 +1037,7 @@ splitjoin() {
 ##   symlink [-f|-q] [-r] [-n] [-r] [--] <arg>...
 
 copy() { _cen_simple_cmd 'cp' "$@" ; }        # -a -u
-rename() { _cen_simple_cmd 'mv' "$@" ; }
+rename() { _cen_simple_cmd 'mv' "$@" ; }      # -o
 remove() { _cen_simple_cmd 'rm' -F "$@" ; }   # -d -o
 symlink() { _cen_simple_cmd 'ln' -S "$@" ; }  # -n -r
 
@@ -995,6 +1054,7 @@ _cen_simple_cmd() {
         -nl)    _args+=('-f') ;;        # ln -f
         -rl)    _args+=('-r') ;;        # ln -r
         -Sl)    _args+=('-s') ;;        # ln -s
+        -om)    _args+=('-f') ;;        # mv -f
         -f?)    _oerr='-f -p' ;;
         -q?)    _oerr='-q' ;;
         -r?)    _orun=1 ;;
@@ -1046,9 +1106,17 @@ system() {
     [ "$_stat" = 0 -a -z "$_onam" ] && return 0         # output ignored
 
     # shellcheck disable=SC2015
-    [ "$_otyp" = 2 ] && local -n _vsys="$_onam" || local _vsys
-    [ -n "$_otyp" ] && readarray -t _vsys <"$CEN_TMP_SYSO"
-    [ "$_otyp" = 1 ] && splitjoin -j "$_onam" -- "${_vsys[@]}"
+    if [ -n "$_otyp" ] ; then
+        [ "$_otyp" = 2 ] && local -n _vsys="$_onam" || local _vsys
+        if [ "$_odel" = '--' ] ; then
+            readarray -t _vsys <"$CEN_TMP_SYSO"
+        else
+            local _sifs="$IFS" _list ; readarray -t _list <"$CEN_TMP_SYSO" ; set +f
+            # shellcheck disable=SC2206
+            IFS=$'\n' _vsys=(${_list[*]}) ; IFS="$_sifs" ; set -f
+        fi
+        [ "$_otyp" = 1 ] && splitjoin -j "$_onam" -- "${_vsys[@]}"
+    fi
     [ "$_stat" = 0 ] && return 0
     CEN_IDNT= ; $_oerr -p $"Running '%s' failed (status %s)" "$1" "$_stat"
     [ -n "$_otyp" ] && message -a -m $_olou -- "${_vsys[@]}"
@@ -1135,6 +1203,10 @@ optarg() {
 
 # terminate script: [-a|-i] [-p] [-s <code>] [-e|-t|-u] [--] <text>...
 quit() {
+    "$CEN_HOOK_QUIT" "$@"
+}
+
+_cen_quit() {
     local _opts=() _term
     while [ "${1::1}" = '-' ] ; do
         case "$1" in
@@ -1147,7 +1219,6 @@ quit() {
         esac ; shift
     done
 
-    type -t "$CEN_HOOK_QUIT" &>/dev/null && "$CEN_HOOK_QUIT" "$@"
     if [ -n "$_term" ] ; then
         if [ $# = 0 ] ;       then set -- "$_term"
         elif [ "$*" = '-' ] ; then set --
@@ -1177,7 +1248,7 @@ usagecat() {
 # command not found runs in a sub-shell, must call quit() indirectly via signal
 # ------------------------------------------------------------------------------
 command_not_found_handle() {
-    set +xeE ; exec 1>&$CEN_STDOUT 2>&$CEN_STDERR
+    set +xeE ; exec 1>&"$CEN_STDOUT" 2>&"$CEN_STDERR"
     message -l $"***ABORT***" $"Command not found:" "$1"
     kill -42 $$                         # send signal to main shell
 }
