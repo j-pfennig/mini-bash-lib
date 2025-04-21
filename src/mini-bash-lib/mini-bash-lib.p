@@ -8,7 +8,7 @@ CEN_EXIT=0
 CEN_HOOK_MESSAGE='message'
 CEN_HOOK_QUIT='_cen_quit'
 CEN_IDNT=
-CEN_MINI_VERSION='0.05'
+CEN_MINI_VERSION='0.07'
 : "${CEN_VERSION:=$CEN_MINI_VERSION}"
 CEN_ARGS=
 CEN_ARGOPT=
@@ -362,8 +362,9 @@ while [ "${1::1}" = - ];do
 case "$1" in
 -)break;;
 --)shift;break;;
--s)shift;CEN_EXIT="$1";;
 -e)_term=$"Terminated after error";CEN_EXIT=1;_opts+=('-e');;
+-h)return;;
+-s)shift;CEN_EXIT="$1";;
 -t|-u)_term=$"Terminated";CEN_EXIT=4;;
 *)_opts+=("$1");;
 esac;shift

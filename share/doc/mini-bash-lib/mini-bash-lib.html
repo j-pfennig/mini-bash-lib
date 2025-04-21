@@ -109,7 +109,7 @@
 <a href="#trace">trace</a>       [<b>-a</b>|<b>-i</b>] [<b>-c</b> <i>labl</i>] [<b>-m</b>|<b>-p</b>] [<b>--</b>] <i>text</i>...
 <a href="#usagecat">usagecat</a>    [<b>-l</b>]
 <a href="#warning">warning</a>     [<b>-a</b>|<b>-i</b>] [<b>-m</b>|<b>-p</b>] [<b>--</b>] <i>text</i>...
-<a href="#quit">quit</a>        [<b>-a</b>|<b>-i</b>] [<b>-e</b>|<b>-t</b>|<b>-u</b>] [<b>-m</b>|<b>-p</b>] [<b>-s</b> <i>code</i>] [<b>--</b>] <i>text</i>...</div>
+<a href="#quit">quit</a>        [<b>-a</b>|<b>-i</b>] [<b>-e</b>|<b>-h</b>|<b>-t</b>|<b>-u</b>] [<b>-m</b>|<b>-p</b>] [<b>-s</b> <i>code</i>] [<b>--</b>] <i>text</i>...</div>
 </div>
 <div class='def-row'>
 <div class='def-label'>General:</div>
@@ -308,7 +308,12 @@ ln <b>-s</b> /usr/share/src/mini-bash-lib/_mini_bash_lib .</pre></div>
 <span>Topic</span><span> - </span><span>main</span><span> - </span><span>Callback: Invoking the framework, option parsing</span></div>
 <div class='def-row'>
 <div class='def-label'>command line:</div>
-<div class='def-block'>The <b>main</b>() function is the entry point for a script&apos;s code. It parses command line options (not to be confused with function options) and passed the remaining call arguments to <a href="#run">run</a>().</div>
+<div class='def-block'>The <b>main</b>() function is the entry point for a script&apos;s code. It parses command line options (not to be confused with function options) and passes the remaining call arguments to <a href="#run">run</a>().</div>
+</div>
+<div class='def-break'></div>
+<div class='def-row'>
+<div class='def-empty'></div>
+<div class='def-block'>The framework implements <b>main</b>(), the <b>run()</b> function must be implemented by the user script.</div>
 </div>
 <div class='def-row'>
 <div class='def-label'>options:</div>
@@ -329,7 +334,7 @@ ln <b>-s</b> /usr/share/src/mini-bash-lib/_mini_bash_lib .</pre></div>
 </div>
 <div class='def-row'>
 <div class='def-label'>Arguments:</div>
-<div class='def-text'>everything goes</div>
+<div class='def-block'>everything can be passed to <b>main</b>(), use &apos;---&apos; or &apos;<b>--</b>&apos; to stop option parsing.</div>
 </div>
 <div class='def-row'>
 <div class='def-label'>Return:</div>
@@ -385,13 +390,21 @@ ln <b>-s</b> /usr/share/src/mini-bash-lib/_mini_bash_lib .</pre></div>
 </div>
 <div class='def-row'>
 <div class='def-label'>Example:</div>
-<div class='def-text'><pre>cleanup() {
+<div class='def-text'><pre># custom quit hook
+cleanup() {
    # ...                       # custom cleanup code
    $<b>DAT_QUIT_CALL</b> <b>&quot;$@&quot;</b>         # call next in hook chain
 }
 
 <b>DAT_QUIT_CALL</b>=<b>&quot;$CEN_HOOK_QUIT&quot;</b>  # save head of hook chain
 <b>CEN_HOOK_QUIT</b>=&apos;cleanup&apos;         # quit hook function</pre></div>
+</div>
+<div class='def-break'></div>
+<div class='def-row'>
+<div class='def-empty'></div>
+<div class='def-text'><pre># call quit hook chain before exec
+quit <b>-h</b>
+system <b>-e</b> exec something        # will not return from exec</div>
 </div>
 <div class='def-row'>
 <div class='def-label'>Important:</div>
@@ -824,7 +837,7 @@ done</pre></div>
 <div class='def-row'>
 <div class='def-label'>Call:</div>
 <div class='def-text'><b>splitjoin</b> <b>-j</b> <i>vstr</i> [<b>-d</b> <i>deli</i>] [<b>--</b>] <i>text</i>...           # join to string
- <b>splitjoin</b> <b>-s</b> <i>varr</i> [<b>-d</b> <i>deli</i>] [<b>--</b>] <i>text</i>...           # split to array</div>
+<b>splitjoin</b> <b>-s</b> <i>varr</i> [<b>-d</b> <i>deli</i>] [<b>--</b>] <i>text</i>...           # split to array</div>
 </div>
 <div class='def-row'>
 <div class='def-label'>Options:</div>
@@ -913,7 +926,7 @@ done</pre></div>
 </div>
 <div class='def-row'>
 <div class='def-label'>Notes:</div>
-<div class='def-block'>mini-bash-lib not explicitly support bash loadables. So <b>system</b> makes no difference beween builtin are external commands.</div>
+<div class='def-block'>mini-bash-lib does not explicitly support bash loadables. So <b>system</b> makes no difference beween builtin are external commands.</div>
 </div>
 <div class='def-break'></div>
 <div class='def-row'>
@@ -1009,17 +1022,20 @@ done</pre></div>
 <span>Function</span><span> - </span><span>quit</span><span> - </span><span>terminate application, remove temporary files</span></div>
 <div class='def-row'>
 <div class='def-label'>Call:</div>
-<div class='def-text'><b>quit</b> [<b>-a</b>|<b>-i</b>] [<b>-e</b>] [<b>-m</b>|<b>-p</b>] [<b>-s</b> <i>code</i>] [<b>-t</b>] [<b>--</b>] <i>text</i>...</div>
+<div class='def-text'><b>quit</b> [<b>-a</b>|<b>-i</b>] [<b>-e</b>] [<b>-m</b>|<b>-p</b>] [<b>-s</b> <i>code</i>] [<b>-t</b>|<b>-u</b>] [<b>--</b>] <i>text</i>...
+<b>quit</b> <b>-h</b>                                 # call quit hook only</div>
 </div>
 <div class='def-row'>
 <div class='def-label'>Options:</div>
 <div class='def-text'><b>-a</b>  auto-indent (e.g. do not print the script name)
-<b>-e</b>
+<b>-e</b>  error exit, print <b>&quot;Terminated after error&quot;</b> if 1st arg is not &apos;-&apos;
+<b>-h</b>  just run <b>quit</b> hook and reset to default (save for subshell)
 <b>-i</b>  always indent
 <b>-m</b>  multi-line output (one line per <i>text</i> argument)
 <b>-p</b>  printf formatting (1st <i>text</i> arg. is format)
-<b>-s</b>
-<b>-t</b></div>
+<b>-s</b>  override the exit code (<b>CEN_EXIT</b>)
+<b>-t</b>  sets <b>CEN_EXIT</b>=4, print <b>&quot;Terminated&quot;</b> if 1st arg is not &apos;-&apos;
+<b>-u</b>  same as <b>-t</b>, see centauri-bash-lib</div>
 </div>
 <div class='def-row'>
 <div class='def-label'>Arguments:</div>
@@ -1028,7 +1044,7 @@ done</pre></div>
 </div>
 <div class='def-row'>
 <div class='def-label'>Return:</div>
-<div class='def-text'>...</div>
+<div class='def-block'>Except for option <b>-h</b> this function does not return. It calls an optional quit hook function and terminates the script with <b>CEN_EXIT</b> as exit code.</div>
 </div>
 </section>
 <section id='section-31'>

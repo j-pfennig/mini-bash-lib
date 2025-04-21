@@ -70,7 +70,7 @@ Note: you can use 'less -R ...' to read this text
            [4mtrace[0m       [[1m-a[0m|[1m-i[0m] [[1m-c[0m [3mlabl[0m] [[1m-m[0m|[1m-p[0m] [[1m--[0m] [3mtext[0m...
            [4musagecat[0m    [[1m-l[0m]
            [4mwarning[0m     [[1m-a[0m|[1m-i[0m] [[1m-m[0m|[1m-p[0m] [[1m--[0m] [3mtext[0m...
-           [4mquit[0m        [[1m-a[0m|[1m-i[0m] [[1m-e[0m|[1m-t[0m|[1m-u[0m] [[1m-m[0m|[1m-p[0m] [[1m-s[0m [3mcode[0m] [[1m--[0m] [3mtext[0m...
+           [4mquit[0m        [[1m-a[0m|[1m-i[0m] [[1m-e[0m|[1m-h[0m|[1m-t[0m|[1m-u[0m] [[1m-m[0m|[1m-p[0m] [[1m-s[0m [3mcode[0m] [[1m--[0m] [3mtext[0m...
 
 [1mGeneral:   [0mThe order of options is not relevant, '[1m--[0m' or '---' terminate the option list (if
            not used and the next argument starts with a '-' that argument would by parsed as
@@ -211,8 +211,11 @@ Note: you can use 'less -R ...' to read this text
 ──────────────────────────────────────────────────────────────────────────────────────────────
 [1mcommand line:[0m
            The [1mmain[0m() function is the entry point for a script's code. It parses command line
-           options (not to be confused with function options) and passed the remaining call
+           options (not to be confused with function options) and passes the remaining call
            arguments to [4mrun[0m().
+
+           The framework implements [1mmain[0m(), the [1mrun()[0m function must be implemented by the user
+           script.
 
 [1moptions:   [0mThe framework implements a few options by default, see below. If a script
            implements an [4moptions[0m() function, this gets called before the internal
@@ -228,7 +231,7 @@ Note: you can use 'less -R ...' to read this text
            [1m--[0m[3mname[0m=[3mvalue[0m    long option with value (using [1m"="[0m separator)
            [1m--[0m[3mname[0m [3mvalue[0m    short option followed by value argument
 
-[1mArguments: [0meverything goes
+[1mArguments: [0meverything can be passed to [1mmain[0m(), use '---' or '[1m--[0m' to stop option parsing.
 
 [1mReturn:    [0mnot used, see [4mquit()[0m
 
@@ -264,13 +267,18 @@ Note: you can use 'less -R ...' to read this text
            Before doing 'exec' (mini-bash-lib does not implement [4msystem()[0m option [1m-x[0m) you
            should call the hook chain (without arguments) to remove temporary files.
 
-[1mExample:   [0m┃ cleanup() {
+[1mExample:   [0m┃ # custom quit hook
+           ┃ cleanup() {
            ┃    # ...                       # custom cleanup code
            ┃    $[1mDAT_QUIT_CALL[0m [1m"$@"[0m         # call next in hook chain
            ┃ }
            ┃ 
            ┃ [1mDAT_QUIT_CALL[0m=[1m"$CEN_HOOK_QUIT"[0m  # save head of hook chain
            ┃ [1mCEN_HOOK_QUIT[0m='cleanup'         # quit hook function
+
+           ┃ # call quit hook chain before exec
+           quit [1m-h[0m
+           system [1m-e[0m exec something        # will not return from exec
 
 [1mImportant: [0m[1mDO NOT[0m 'exit' or quit from inside this function
 
@@ -548,7 +556,7 @@ Note: you can use 'less -R ...' to read this text
 [1mFunction - splitjoin -[0m [1msplit text data into array or join data to string[0m
 ──────────────────────────────────────────────────────────────────────────────────────────────
 [1mCall:      [0m[1msplitjoin[0m [1m-j[0m [3mvstr[0m [[1m-d[0m [3mdeli[0m] [[1m--[0m] [3mtext[0m...           # join to string
-            [1msplitjoin[0m [1m-s[0m [3mvarr[0m [[1m-d[0m [3mdeli[0m] [[1m--[0m] [3mtext[0m...           # split to array
+           [1msplitjoin[0m [1m-s[0m [3mvarr[0m [[1m-d[0m [3mdeli[0m] [[1m--[0m] [3mtext[0m...           # split to array
 
 [1mOptions:   [0m[1m-d[0m  IFS delimiters (default [1m-j[0m: '\t' [1m-s[0m: '\t\n')
            [1m-j[0m  join to a single string, default delimiter is '\t' (tab)
@@ -608,8 +616,8 @@ Note: you can use 'less -R ...' to read this text
 
            [1mcurrently option -d is not implemented, except -d '--'.[0m
 
-[1mNotes:     [0mmini-bash-lib not explicitly support bash loadables. So [1msystem[0m makes no difference
-           beween builtin are external commands.
+[1mNotes:     [0mmini-bash-lib does not explicitly support bash loadables. So [1msystem[0m makes no
+           difference beween builtin are external commands.
 
            [1msystem[0m cannot by used recursively, so better don't call functions.
 
@@ -668,20 +676,24 @@ Note: you can use 'less -R ...' to read this text
 ──────────────────────────────────────────────────────────────────────────────────────────────
 [1mFunction - quit -[0m [1mterminate application, remove temporary files[0m
 ──────────────────────────────────────────────────────────────────────────────────────────────
-[1mCall:      [0m[1mquit[0m [[1m-a[0m|[1m-i[0m] [[1m-e[0m] [[1m-m[0m|[1m-p[0m] [[1m-s[0m [3mcode[0m] [[1m-t[0m] [[1m--[0m] [3mtext[0m...
+[1mCall:      [0m[1mquit[0m [[1m-a[0m|[1m-i[0m] [[1m-e[0m] [[1m-m[0m|[1m-p[0m] [[1m-s[0m [3mcode[0m] [[1m-t[0m|[1m-u[0m] [[1m--[0m] [3mtext[0m...
+           [1mquit[0m [1m-h[0m                                 # call quit hook only
 
 [1mOptions:   [0m[1m-a[0m  auto-indent (e.g. do not print the script name)
-           [1m-e[0m
+           [1m-e[0m  error exit, print [1m"Terminated after error"[0m if 1st arg is not '-'
+           [1m-h[0m  just run [1mquit[0m hook and reset to default (save for subshell)
            [1m-i[0m  always indent
            [1m-m[0m  multi-line output (one line per [3mtext[0m argument)
            [1m-p[0m  printf formatting (1st [3mtext[0m arg. is format)
-           [1m-s[0m
-           [1m-t[0m
+           [1m-s[0m  override the exit code ([1mCEN_EXIT[0m)
+           [1m-t[0m  sets [1mCEN_EXIT[0m=4, print [1m"Terminated"[0m if 1st arg is not '-'
+           [1m-u[0m  same as [1m-t[0m, see centauri-bash-lib
 
 [1mArguments: [0m[3mcode[0m  application exit code
            [3mtext[0m  Any text to be output
 
-[1mReturn:    [0m...
+[1mReturn:    [0mExcept for option [1m-h[0m this function does not return. It calls an optional quit hook
+           function and terminates the script with [1mCEN_EXIT[0m as exit code.
 
 ──────────────────────────────────────────────────────────────────────────────────────────────
 [1mFunction - usagecat -[0m [1mcopy usage text to stdout[0m

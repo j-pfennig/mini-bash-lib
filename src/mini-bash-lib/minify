@@ -133,7 +133,7 @@ run_pack() {
 
     # truncate output file
     if [ -n "$CEN_OPT_OUTPUT" ] ; then
-        message -p "Read %s lines from '%s'" "${#data[@]}" "$file"
+        message -p "Read %s lines from '%s'" "${#data[@]}" "${file#$PWD/}"
         fout="$CEN_OPT_OUTPUT"
         [ "$fout" = '.' ] && fout="${file}.p"
         [ "$fout" -ef "$file" ] && quit -e "Refusing to override input file"
@@ -279,7 +279,7 @@ output() {
     create -t -v outp "$fout"
     if [ "$fout" != '/dev/stdout' ] ; then
         [ -n "$CEN_OPT_WORLD" -o -x "$file" ] && system -f -- chmod 775 "$fout"
-        message -a -p "Wrote %s lines into '%s'" "${#outp[@]}" "$fout"
+        message -a -p "Wrote %s lines into '%s'" "${#outp[@]}" "${fout#$PWD/}"
     fi
 }
 

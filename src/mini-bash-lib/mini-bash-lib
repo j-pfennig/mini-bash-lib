@@ -103,7 +103,7 @@
 #       [[trace]]       [-a|-i] [-c <labl>] [-m|-p] [--] <text>...
 #       [[usagecat]]    [-l]
 #       [[warning]]     [-a|-i] [-m|-p] [--] <text>...
-#       [[quit]]        [-a|-i] [-e|-t|-u] [-m|-p] [-s <code>] [--] <text>...
+#       [[quit]]        [-a|-i] [-e|-h|-t|-u] [-m|-p] [-s <code>] [--] <text>...
 #
 #+General: The order of options is not relevant, '--' or '---' terminate the
 #       option list (if not used and the next argument starts with a '-' that
@@ -252,15 +252,18 @@
 #
 # command°line:
 #+The main() function is the entry point for a script's code. It parses command
-# line options (not to be confused with function options) and passed the remaining
+# line options (not to be confused with function options) and passes the remaining
 # call arguments to [[run]]().
+#
+#+      The framework implements main(), the **run()** function must be implemented
+#       by the user script.
 #
 #+options: The framework implements a few options by default, see below. If a
 # script implements an [[options]]() function, this gets called before the internal
 # implementation. For each command line option the options function is called once,
 # see [[optarg()]]. When all options were processed ... empty call ...
 #
-# Call:     main [<opt>...] [---] [<arg>...]
+# Call:     main [<opt>...] [--|---] [<arg>...]
 #
 # Options:  -<char>             short option
 #           -<char><value>      short option with value (no separating space)
@@ -269,9 +272,10 @@
 #           --<name>=<value>    long option with value (using "=" separator)
 #           --<name> <value>    short option followed by value argument
 #
-# Arguments:                    everything goes
+#+Arguments:everything can be passed to main(), use '---' or '--' to stop
+#           option parsing.
 #
-# Return:                       not used, see [[quit()]]
+# Return:   not used, see [[quit()]]
 # ------------------------------------------------------------------------------
 
 # ------------------------------------------------------------------------------
@@ -309,13 +313,18 @@
 #          option -x) you should call the hook chain (without arguments) to
 #          remove temporary files.
 #
-#.Example: cleanup() {
+#.Example: # custom quit hook
+#.         cleanup() {
 #.             # ...                       # custom cleanup code
 #.             $DAT_QUIT_CALL "$@"         # call next in hook chain
 #.         }
 #.
 #.         DAT_QUIT_CALL="$CEN_HOOK_QUIT"  # save head of hook chain
 #.         CEN_HOOK_QUIT='cleanup'         # quit hook function
+#
+#.         # call quit hook chain before exec
+#          quit -h
+#          system -e exec something        # will not return from exec
 #
 #+Important: **DO NOT** 'exit' or quit from inside this function
 # ------------------------------------------------------------------------------
@@ -607,8 +616,8 @@
 # ------------------------------------------------------------------------------
 # splitjoin - split text data into array or join data to string
 #
-# Call:      splitjoin -j <vstr> [-d <deli>] [--] <text>...     # join to string
-#            splitjoin -s <varr> [-d <deli>] [--] <text>...     # split to array
+# Call:     splitjoin -j <vstr> [-d <deli>] [--] <text>...     # join to string
+#           splitjoin -s <varr> [-d <deli>] [--] <text>...     # split to array
 #
 # Options:  -d  IFS delimiters (default -j: '\t' -s: '\t\n')
 #           -j  join to a single string, default delimiter is '\t' (tab)
@@ -735,20 +744,25 @@
 # ------------------------------------------------------------------------------
 # quit - terminate application, remove temporary files
 #
-# Call:     quit [-a|-i] [-e] [-m|-p] [-s <code>] [-t] [--] <text>...
+# Call:     quit [-a|-i] [-e] [-m|-p] [-s <code>] [-t|-u] [--] <text>...
+#           quit -h                                 # call quit hook only
 #
 # Options:  -a  auto-indent (e.g. do not print the script name)
-#           -e
+#           -e  error exit, print "Terminated after error" if 1st arg is not '-'
+#           -h  just run quit hook and reset to default (save for subshell)
 #           -i  always indent
 #           -m  multi-line output (one line per <text> argument)
 #           -p  printf formatting (1st <text> arg. is format)
-#           -s
-#           -t
+#           -s  override the exit code (CEN_EXIT)
+#           -t  sets CEN_EXIT=4, print "Terminated" if 1st arg is not '-'
+#           -u  same as -t, see centauri-bash-lib
 #
 # Arguments:<code>  application exit code
 #           <text>  Any text to be output
 #
-# Return:   ...
+#+Return:   Except for option -h this function does not return. It calls an optional
+#           ''quit'' hook function and terminates the script with CEN_EXIT as exit
+#           code.
 # ------------------------------------------------------------------------------
 
 # ------------------------------------------------------------------------------
@@ -785,7 +799,7 @@ if [ -z "$CEN_HOOK_MESSAGE" ] ; then    # centauri-bash-lib not loaded ...
     CEN_HOOK_MESSAGE='message'
     CEN_HOOK_QUIT='_cen_quit'   # called by quit()
     CEN_IDNT=                   # Flag for indentation
-    CEN_MINI_VERSION='0.06'
+    CEN_MINI_VERSION='0.07'
     : "${CEN_VERSION:=$CEN_MINI_VERSION}"
 
     CEN_ARGS=               # option arg count  (0:=error  1:=flag only  2:has value)
@@ -1212,8 +1226,9 @@ _cen_quit() {
         case "$1" in
         -)  break ;;
         --) shift ; break ;;
-        -s) shift ; CEN_EXIT="$1" ;;
         -e) _term=$"Terminated after error" ; CEN_EXIT=1 ; _opts+=('-e') ;;
+        -h) return ;;
+        -s) shift ; CEN_EXIT="$1" ;;
         -t|-u) _term=$"Terminated" ; CEN_EXIT=4 ;;
         *)  _opts+=("$1") ;;
         esac ; shift
