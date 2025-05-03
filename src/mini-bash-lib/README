@@ -5,6 +5,7 @@ _mini_bash_lib          a proxy that either loads mini-bash-lib or centauri-bash
 mini-bash-lib           the library source including documentation and code
 mini-bash-lib.p         packed library version, no comments. See 'minify' 
 minify                  tool to pack script code or the create a stand-alone template
+mini10                  tool for internationalisation using GNU gettext
 
 Using minify
 ------------

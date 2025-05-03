@@ -93,7 +93,7 @@
 #       [[fatal]]       [-m|-p] [--] <text>...
 #       [[folder]]      [-c] [-m] [-p] [-f|-q] [--] <path>
 #       [[message]]     [-a|-i] [-c <labl>] [-m|-p] [--] <text>...
-#       [[optarg]]      <name> <vnam>|- [-t|-f] [<valu>]
+#       [[optarg]]      <name> <vnam>|- [-t|-f|-m] [<valu>]
 #       [[rename]]      [-f|-q] [-r] [--] <arg>...
 #       [[remove]]      [-f|-q] [-r] [-d] [-o] [--] <arg>...
 #       [[splitjoin]]   [-j|-s <vnam>] [-d <deli>]
@@ -564,12 +564,16 @@
 # optarg - Option setter for use in options() call-back
 #
 # Call:     (1) optarg <name> <vnam>|- -f
-#           (2) optarg <name> <vnam>|- -t [<valu>]
+#           (2) optarg <name> <vnam>|- -t [<text>]
+#           (3) optarg <test> - -m <args>
 #
 # Options:  -f      flag option, set <vnam> to "1"
+#           -m      report conflicting ooptions
 #           -t      text option, set <vnam> to option argument or <valu>
 #
 # Arguments:<name>  option long name
+#           <test>  report conflict if not empty or 1
+#           <text>  appended to 'Conflicting options:'
 #           <vnam>  name of a variable to be set. If "-" the name is generated
 #                   from name like: CEN_OPT_<name>
 #           <valu>  default used when the option argument is "-"
@@ -784,6 +788,7 @@
 # ------------------------------------------------------------------------------
 # mini-bash-lib         implementation
 # ------------------------------------------------------------------------------
+### mini-bash-lib source ###
 if [ -z "$CEN_HOOK_MESSAGE" ] ; then    # centauri-bash-lib not loaded ...
 
 # shellcheck disable=SC2102
@@ -1198,15 +1203,16 @@ main() {
     PATH=' ' type -t run &>/dev/null || return 2 ; run "$@"
 }
 
-# get option setting: <name> <vnam>|- [-t|-f] [<value>]
+# get option setting: <name> <vnam>|- [-t|-f|-m] [<value>]
 optarg() {
     local _name="${2:--}" _aarr="$CEN_ACTARR"
     [ "$_name" = '-' ] && _name="CEN_OPT_${1^^}"
     case "${3:--f}" in
     -f) printf -v "$_name" '%s' "${4:-1}" ; CEN_ARGS=1 ;;
+    -m) [ "${1:-1}" = 1 ] || quit -e $"Conflicting options:" "$4" ;;
     *)  if [ -z "$CEN_ARGOPT" ] ; then
             [ "$_aarr" != '-' ] && [ -z "$_aarr" -o "${_aarr::1}" = '-' ] &&
-                quit -e $"Missing option value:" "--$1"
+                quit -e $"Missing option value:" "--$1" MM
             CEN_ARGS=2 ; CEN_ARGOPT="$_aarr"
         else
             CEN_ARGS=1
@@ -1285,5 +1291,6 @@ elif [ -n "$CEN_STAGE" ] ; then
 else
     main "$@" ; quit                    # using centauri-bash-lib
 fi
+### mini-bash-lib end ###
 
 # End

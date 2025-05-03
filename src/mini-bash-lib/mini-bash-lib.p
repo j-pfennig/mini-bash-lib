@@ -343,9 +343,10 @@ local _name="${2:--}" _aarr="$CEN_ACTARR"
 [ "$_name" = - ]&&_name="CEN_OPT_${1^^}"
 case "${3:--f}" in
 -f)printf -v "$_name" '%s' "${4:-1}";CEN_ARGS=1;;
+-m)[ "${1:-1}" = 1 ]||quit -e $"Conflicting options:" "$4";;
 *)if [ -z "$CEN_ARGOPT" ];then
 [ "$_aarr" != - ]&&[ -z "$_aarr" -o "${_aarr::1}" = '-' ] &&
-quit -e $"Missing option value:" "--$1"
+quit -e $"Missing option value:" "--$1" MM
 CEN_ARGS=2;CEN_ARGOPT="$_aarr"
 else
 CEN_ARGS=1

@@ -3,7 +3,7 @@ CEN_LEGAL="Copyright Dr. J. Pfennig (c) 2007-2025; BSD License"
 CEN_TITLE="Tool to generate gnu gettxt-tools internationalization"
 
 # use proxy to load mini-bash-lib or centauri-bash-lib (if installed)
-PATH+="${0%/*}" . _mini_bash_lib -t - '0.03' || exit 2
+PATH+=":${0%/*}" . _mini_bash_lib -t - '0.03' || exit 2
 
 # declare global variables ...
 
@@ -15,8 +15,8 @@ CEN_OPT_BASE=           # see --base
 run_dump() {
     local name="${2##*/}"
     local fipo="${1%/*}/$name.po"
-    if ! [ "$2" -nt "$fipo" ] ; then
-        trace -a -c $"Nothing to update" "$fipo" ; return
+    if [ -z "$CEN_OPT_FORCE" ] && [ ! "$2" -nt "$fipo" ] ; then
+        message -a $"Nothing to update (try option '--force'):" "$fipo" ; return
     fi
     local umsg=('msgid ""' 'msgstr "Content-Type: text/plain; charset=UTF-8"')
     while : ; do
@@ -58,8 +58,8 @@ run_build() {
     local name="${2##*/}"
     local fipo="${1%/*}/$name.po"
     local fimo="$1/$name.mo"
-    if ! [ "$fipo" -nt "$fimo" ] ; then
-        trace -a -c $"Nothing to update" "$fimo" ; return
+    if [ -z "$CEN_OPT_FORCE" ] && [ ! "$fipo" -nt "$fimo" ] ; then
+        message -a $"Nothing to update (try option '--force'):" "$fimo" ; return
     fi
 
     message -a -c $"Create catalogue" "$fimo"
@@ -69,15 +69,17 @@ run_build() {
 }
 
 # ------------------------------------------------------------------------------
-# create language folder
+# create language folder: <lang> <script>
 # ------------------------------------------------------------------------------
 run_lang() {
     local ldir="$1/LC_MESSAGES"
     if [ -d "$ldir" ] ; then
-        warning $"Existing language folder:" "$ldir"
+        [ -z "$2" ] && warning $"Existing language folder:" "$ldir"
     elif confirm -y -f $"Create language folder '%s'" "$ldir" ; then
         folder -m -f -- "$ldir"
     fi
+
+    [ -n "$2" ] && symlink -n -l "$2" "${2##*/}"        # run: ln -f -r
 }
 
 # ------------------------------------------------------------------------------
@@ -85,23 +87,52 @@ run_lang() {
 # ------------------------------------------------------------------------------
 run() {
     # need two arguments - show usage info and quit
-    [ $# = 2 ] || { usage ; quit -s 1 ; }
+    [ $# -ge 2 ] || { usage ; quit -s 1 ; }
+
+    # find base folder
+    local orig="$PWD"
+    if [ "${CEN_OPT_BASE:--}" = '-' ] ; then
+        system -s CEN_OPT_BASE -- realpath -- "$BASH_SOURCE"
+        CEN_OPT_BASE="${CEN_OPT_BASE%/*/*/*}"
+    fi
+    folder -f -c "$CEN_OPT_BASE"
+
+    local lang bsrc
+    case "$#$1" in
+    3lan*)  lang="$2" ; name="$3" ;;
+    2lan*)  lang="$2" ;;
+    3dum*)  lang="$2" ; name="$3" ;;
+    2dum*)  name="$2" ;;
+    3bui*)  lang="$2" ; name="$3" ;;
+    2bui*)  name="$2" ;;
+    *)      usage ; quit -s 1
+    esac
 
     # check script path
-    local bsrc
-    for bsrc in "$2" "../src/local/$2" "../src/mini-bash-lib/$2" \
-                     "../doc/mini-bash-lib/*" '' ; do
-        [ -z "$bsrc" ] &&
-            quit -e $"Source script not found:" "$2"
-        [ -x "$bsrc" ] && break
-    done
+    if [ -n "$name" ] ; then
+        for bsrc in "$name" "src/scripts" "src/mini-bash-lib" \
+                            "share/doc/mini-bash-lib/"* ; do
+            case "$bsrc" in
+            /*) break ;;
+            .*) system -s bsrc -- realpath -- "$name" ; break ;;
+            *)  if [ ! -d "$bsrc" ] ; then
+                    [ -e "$orig/$bsrc" ] || continue
+                    system -s bsrc -- realpath -- "$orig/$bsrc" ; break
+                fi
+            esac
+            trace -a -c "Script search" "$bsrc"
+            bsrc="$PWD/$bsrc/$name" ; [ -x "$bsrc" ] && break
+        done
+        [ -f "$bsrc" ] || quit -e $"Source script not found:" "$name $bsrc"
+        message -a -c $"Script source" "$bsrc"
+    fi
 
     # get language folders
-    folder -c -f -- "${CEN_OPT_BASE:-${0%/*}}"
+    folder -c -f -- 'share/locale'
     if [ "${1::3}" = 'lan' ] ; then
-        run_lang "$2" ; quit
+        run_lang "$lang" "$bsrc" ; quit
     fi
-    local lang dirs=(??/LC_MESSAGES)
+    local item dirs=(??/LC_MESSAGES)
     [ "${dirs::2}" = '??' ] &&
         quit -e $"No language folder found, try option '--base'"
 
@@ -109,10 +140,12 @@ run() {
     system -c -f msgfmt msguniq msgmerge
 
     # loop over languge folders ...
-    for lang in "${dirs[@]}" ; do
+    folder -c -f -- "$orig"
+    for item in "${dirs[@]}" ; do
+        [ -n "$lang" -a "$lang" != "${item%/*}" ] && continue
         case "$1" in
-        bui*)   run_build "$lang" "$bsrc" ;;
-        dum*)   run_dump "$lang" "$bsrc" ;;
+        bui*)   run_build "$item" "$bsrc" ;;
+        dum*)   run_dump "$item" "$bsrc" ;;
         *)      quit -e $"1st argument must be one of:" 'lang|dump|build'
         esac
         error -q
@@ -133,13 +166,13 @@ options() {
 # ------------------------------------------------------------------------------
 usage() {
     usagecat <<!EOF
-Usage:     $CEN_NAME [-d|-h] [-q|-v] -B <base> [--] <what> <arg>
+Usage:     $CEN_NAME [-d|-h] [-q|-v] -B <base> [--] <what> <arg>...
 
            $CEN_TITLE.
 
-           (1) $CEN_NAME <opt>... lang  <lang>          # new language
-           (2) $CEN_NAME <opt>... dump  <script>        # update po files
-           (3) $CEN_NAME <opt>... build <script>        # build mo files
+           (1) $CEN_NAME <opt>... lang  <lang> [<script>]  # add language
+           (2) $CEN_NAME <opt>... dump  [<lang>] <script>  # update po files
+           (3) $CEN_NAME <opt>... build [<lang>] <script>  # build mo files
 
 Options:   -d --dryrun          show what would be done, make no changes
            -h --help            show this text

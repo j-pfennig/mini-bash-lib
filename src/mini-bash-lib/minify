@@ -3,7 +3,7 @@ CEN_LEGAL="Copyright Dr. J. Pfennig (c) 2007-2025; BSD License"
 CEN_TITLE="Tool that strips comments and extra spaces or quotes"
 
 # use proxy to load mini-bash-lib or centauri-bash-lib (if installed)
-PATH+=":${0%/*}" . _mini_bash_lib -n -y - '0.03' || exit 2
+PATH+=":${0%/*}" . _mini_bash_lib -n -t -y - '0.04' || exit 2
 
 # declare global variables ...
 
@@ -69,28 +69,51 @@ DAT_HELLO=(
 # Edit a script
 # ------------------------------------------------------------------------------
 run_edit() {
-    [ -w "$CEN_OPT_REFRESH" ] || quit -e "Not a writable file:" "$CEN_OPT_REFRESH"
-    local file="${CEN_CMDDATA%.p}.p"            # see proxy code
-    [ -s "$file" ] || quit -e "Need packed mini-bash-lib:" "$file"
-
     local inpf inpp
     system -r -f -- eval "readarray -t inpf <\"$CEN_OPT_REFRESH\""
-    system -r -f -- eval "readarray -t inpp <\"$file\""
+    [ -w "$CEN_OPT_REFRESH" ] || quit -e $"Not a writable file:" "$CEN_OPT_REFRESH"
+
+    ___load_source() {
+        local _iraw _file="${CEN_CMDDATA%.p}"       # see proxy code
+        [ -s "$_file" ] || quit -e $"Need mini-bash-lib source:" "$_file"
+        system -r -f -- eval "readarray -t _iraw <\"$_file\""
+        local _line _skip=1
+        for _line in "${_iraw[@]}" ; do
+            [ -z "$skip" ] && inpp+=("$_line")
+            case "$_line" in
+            '### mini-bash-lib source ###')
+                _skip= ;;
+            '### mini-bash-lib end ###')
+                _ski0=1 ;;
+            esac
+        done
+    }
+
+    ___load_packed() {
+        local _file="${CEN_CMDDATA%.p}.p"           # see proxy code
+        [ -s "$_file" ] || quit -e $"Need packed mini-bash-lib:" "$_file"
+        system -r -f -- eval "readarray -t inpp <\"$_file\""
+    }
 
     local line skip tag1 tag2 outp=()
     for line in "${inpf[@]}" ; do
         [ -z "$skip" ] && outp+=("$line")
         case "$line" in
+        '### mini-bash-lib source ###')
+            ___load_source
+            skip=1 : tag1=2 ; outp+=("${inpp[@]}") ;;
         '### mini-bash-lib packed ###')
+            ___load_packed
             skip=1 ; tag1=1 ; outp+=("${inpp[@]}") ;;
         '### mini-bash-lib end ###')
             skip= ; tag2=1 ; outp+=("$line") ;;
         esac
     done
-    [ -z "$tag1" ] && quit -e "File not tagged as embedding mini-bash-lib"
+    [ -z "$tag1" ] && quit -e $"File not tagged as embedding mini-bash-lib"
     [ -z "$tag2" ] && outp+=('### mini-bash-lib end ###')
     rename -f -o -- "$CEN_OPT_REFRESH" "$CEN_OPT_REFRESH.bak"
     output "$CEN_OPT_REFRESH" "${outp[@]}"
+    system -e -p chmod 775 -- "$CEN_OPT_REFRESH"
 }
 
 # ------------------------------------------------------------------------------
@@ -124,19 +147,19 @@ run_pack() {
     # load data from input file
     local data fout file="$1"
     if [ "$file" = '.' ] ; then         # use library source
-        [ "$CEN_FEATURE_N" = 1 ] || quit "Try again using option '--mini=1'"
+        [ "$CEN_FEATURE_N" = 1 ] || quit $"Try again using option '--mini=1'"
         file="${CEN_CMDDATA%.p}"        # see proxy code
     fi
 
-    [ -f "$file" -a -r "$file" ] || quit -e "Not a readable file:" "$file"
+    [ -f "$file" -a -r "$file" ] || quit -e $"Not a readable file:" "$file"
     system -r -f -- eval "readarray -t data <\"$file\""
 
     # truncate output file
     if [ -n "$CEN_OPT_OUTPUT" ] ; then
-        message -p "Read %s lines from '%s'" "${#data[@]}" "${file#$PWD/}"
+        message -p $"Read %s lines from '%s'" "${#data[@]}" "${file#$PWD/}"
         fout="$CEN_OPT_OUTPUT"
         [ "$fout" = '.' ] && fout="${file}.p"
-        [ "$fout" -ef "$file" ] && quit -e "Refusing to override input file"
+        [ "$fout" -ef "$file" ] && quit -e $"Refusing to override input file"
         create -t -- "$fout"
         DAT_QUIT_CALL="$CEN_HOOK_QUIT"  # save head of hook chain
         CEN_HOOK_QUIT='cleanup'         # quit hook to delete bad output
@@ -257,7 +280,7 @@ run() {
 
     local fout="${CEN_OPT_REFRESH:-$1}" ;
     if [ "${fout:-.}" != '.' ] && [ -e "$fout" ] ; then
-        confirm -n -f "Replace existing file '%s'" "$fout" || quit -a -t
+        confirm -n -f $"Replace existing file '%s'" "$fout" || quit -a -t
     fi
 
     if [ -n "$CEN_OPT_REFRESH" ] ; then
@@ -278,8 +301,8 @@ output() {
     [ "$fout" = '-' ] && fout='/dev/stdout'
     create -t -v outp "$fout"
     if [ "$fout" != '/dev/stdout' ] ; then
-        [ -n "$CEN_OPT_WORLD" -o -x "$file" ] && system -f -- chmod 775 "$fout"
-        message -a -p "Wrote %s lines into '%s'" "${#outp[@]}" "${fout#$PWD/}"
+        [ -n "$CEN_OPT_WORLD" -o -x "$file" ] && system -f -- chmod 775 -- "$fout"
+        message -a -p $"Wrote %s lines into '%s'" "${#outp[@]}" "${fout#$PWD/}"
     fi
 }
 
@@ -288,9 +311,9 @@ output() {
 # ------------------------------------------------------------------------------
 cleanup() {
     if error -t ; then
-        trace "No error, keep output"
+        trace $"No error, keep output"
     elif [ -x "$DAT_FOUT" ] ; then
-        trace "Remove output after error:" "$DAT_FOUT"
+        trace $"Remove output after error:" "$DAT_FOUT"
         remove -- $DAT_FOUT
     fi
     $DAT_QUIT_CALL "$@"                     # call next in chain

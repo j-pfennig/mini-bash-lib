@@ -1,0 +1,10 @@
+msgid ""
+msgstr "Content-Type: text/plain; charset=UTF-8"
+
+#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/minify:291
+msgid "No error, keep output"
+msgstr "Ohne Fehler, Ausgabe behalten"
+
+#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/minify:293
+msgid "Remove output after error:"
+msgstr "Ausgabe nach Fehler entfernen:"

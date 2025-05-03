@@ -1,46 +1,52 @@
 msgid ""
 msgstr "Content-Type: text/plain; charset=UTF-8\n"
 
-#: mini10:19 mini10:62
-msgid "Nothing to update"
-msgstr "Nichts zu tun"
+#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini10:19
+#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini10:62
+msgid "Nothing to update (try option '--force'):"
+msgstr "Nichts zu aktualisieren, Option '--force' versuchen:"
 
-#: mini10:31
+#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini10:31
 msgid "Initial translations"
 msgstr "Erste Übersetzungen"
 
-#: mini10:34
+#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini10:34
 msgid "No translations found:"
 msgstr "Keine Übersetzungen gefunden:"
 
-#: mini10:40
+#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini10:40
 msgid "Update translations"
 msgstr "Übersetzungen aktualisieren"
 
-#: mini10:45
+#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini10:45
 msgid "File without translations:"
 msgstr "Datei ohne Übersetzungen:"
 
-#: mini10:65
+#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini10:65
 msgid "Create catalogue"
-msgstr "Katalog erstallen"
+msgstr "Katalog erstellen"
 
-#: mini10:77
+#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini10:77
 msgid "Existing language folder:"
 msgstr "Sprachverzeichnis schon vorhanden"
 
-#: mini10:78
+#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini10:78
 msgid "Create language folder '%s'"
 msgstr "Sprachverzeichnus '%s' erstellen"
 
-#: mini10:95
+#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini10:125
 msgid "Source script not found:"
 msgstr "Quellen-Skript nicht gefunden:"
 
-#: mini10:106
+#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini10:126
+msgid "Script source"
+msgstr "Skript Quelle"
+
+#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini10:136
 msgid "No language folder found, try option '--base'"
 msgstr "Kein Sprachverzeichnis gefunden, Option '--base' versuchen"
 
-#: mini10:116
+#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini10:148
 msgid "1st argument must be one of:"
 msgstr "1. Argument muss eines von diesen sein:"
+
