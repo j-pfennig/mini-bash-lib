@@ -682,7 +682,8 @@
 #           array. By default empty lines are ignored, uses -d '--' to return
 #           empty lines too.
 #
-#+          **currently option -d is not implemented, except -d '--'.**
+#+          Option -d in mini-bash-lib implies '\n', e.g. it is not possible to
+#           keep new-line chars in returned data.
 #
 #+Notes:    mini-bash-lib does not explicitly support bash loadables. So system
 #           makes no difference beween builtin are external commands.
@@ -804,7 +805,7 @@ if [ -z "$CEN_HOOK_MESSAGE" ] ; then    # centauri-bash-lib not loaded ...
     CEN_HOOK_MESSAGE='message'
     CEN_HOOK_QUIT='_cen_quit'   # called by quit()
     CEN_IDNT=                   # Flag for indentation
-    CEN_MINI_VERSION='0.07'
+    CEN_MINI_VERSION='0.08'
     : "${CEN_VERSION:=$CEN_MINI_VERSION}"
 
     CEN_ARGS=               # option arg count  (0:=error  1:=flag only  2:has value)
@@ -1132,7 +1133,7 @@ system() {
         else
             local _sifs="$IFS" _list ; readarray -t _list <"$CEN_TMP_SYSO" ; set +f
             # shellcheck disable=SC2206
-            IFS=$'\n' _vsys=(${_list[*]}) ; IFS="$_sifs" ; set -f
+            printf -v IFS "${_odel:-\t\n}" ; _vsys=(${_list[*]}) ; IFS="$_sifs" ; set -f
         fi
         [ "$_otyp" = 1 ] && splitjoin -j "$_onam" -- "${_vsys[@]}"
     fi

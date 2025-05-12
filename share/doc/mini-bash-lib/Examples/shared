@@ -1,6 +1,9 @@
 #!/usr/bin/bash
-CEN_LEGAL="Copyright <anonymous> (c) 2024; <unknown> License"
+CEN_LEGAL="Copyright <anonymous> (c) 2024-2025; <unknown> License"
 CEN_TITLE="A 'hello world' using mini-bash-lib via proxy"
+
+# See 'minify -W -O <name>'    to create a shared mini-bash-lib app ...
+# and 'minify -W -U -O <name>' to create an embedded mini-bash-lib app
 
 # use proxy to load mini-bash-lib or centauri-bash-lib (if installed)
 
@@ -23,14 +26,20 @@ run() {
     message -- "$@"
 }
 
+# ------------------------------------------------------------------------------
+# Parse command line options
+# ------------------------------------------------------------------------------
 #options() {
 #    case "$1" in
 #        -X|--extra)     optarg extra -     -f ;;
 #    esac
 #}
 
+# ------------------------------------------------------------------------------
+# Provide usage information
+# ------------------------------------------------------------------------------
 #usage() {
-#    create -c <<!EOF
+#    usagecat <<!EOF
 #Usage:     $CEN_NAME [-d|-h] [-v|-q] [---] <arg>...
 #
 #           $CEN_TITLE.
@@ -48,7 +57,7 @@ run() {
 #}
 
 # ------------------------------------------------------------------------------
-# Call run() after option parsing
+# Pass control to app framework
 # ------------------------------------------------------------------------------
 main "$@" ; quit
 

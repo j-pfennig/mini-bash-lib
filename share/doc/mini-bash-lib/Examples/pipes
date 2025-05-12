@@ -1,5 +1,5 @@
 #!/usr/bin/bash
-CEN_LEGAL="Copyright Dr. J. Pfennig (c) 2007-2024; BSD License"
+CEN_LEGAL="Copyright Dr. J. Pfennig (c) 2024-2025; BSD License"
 CEN_TITLE="Demonstrating I/O redirection and pipes with system()"
 
 # --- load the shared library via proxy:
@@ -46,7 +46,7 @@ run() {
 
     local tmp1 tmp2
     tmpfile -s tmp1 ; tmpfile -s tmp2
-      eopt='--nonsense'     # uncomment to inject an error
+    # eopt='--nonsense'     # uncomment to inject an error
     system -e -p             -- eval "ls -lR $eopt >$tmp1"
     system -e -p -t          -- eval "sort   <$tmp1 >$tmp2"
     system -e -p -s rslt -t  -- eval "md5sum <$tmp2"

@@ -1,0 +1,56 @@
+#!/usr/bin/bash
+CEN_LEGAL="Copyright Dr. J. Pfennig (c) 2025; BSD License"
+CEN_TITLE="Demonstrate 'embed', create doc text and viewer"
+
+# use proxy to load mini-bash-lib or centauri-bash-lib (if installed)
+
+PATH+=":${0%/*}" . _mini_bash_lib -y - '0.01' || exit 2
+
+# ------------------------------------------------------------------------------
+# Payload
+# ------------------------------------------------------------------------------
+run() {
+    local   full                    # set when centauri-bash-lib is installed
+
+    message    "mini-bash-lib source:" "$CEN_CMDBASE"
+    folder -c -f -- "$CEN_CMDBASE/../../share/doc"
+    message -a "Documentation folder:" "$PWD"
+    system -c -f "$CEN_CMDBASE/minify"
+    if [ "$CEN_FEATURE_N" = 1 ] ; then
+        message -i
+        warning -a "Reduced functionality, not using 'centaurihelp'"
+    elif system -c centaurihelp ; then
+        full=1
+    else
+        message -i
+        warning -a "Reduced functionality, 'centaurihelp' is not installed"
+    fi
+    message -i
+    confirm -n "Create doc text and viewer" || quit -a -t
+
+    local text file
+    tmpfile -n -s file
+
+    # --- have centauri-bash-lib, use centaurihelp ---
+
+    if [ -n "$full" ] ; then
+        embed -a text -d -- centaurihelp -U "$CEN_CMDBASE/mini-bash-lib" || quit
+
+    # --- no centauri-bash-lib, use minify ---
+
+    else
+        embed -a text -d -- "$CEN_CMDBASE/minify" --mini=1 -D -T -O "$file" . || quit
+    fi
+
+    
+    trace -c "Text lines" "${#text[@]}"
+    create -f -v text "$file"
+    system -f -z /usr/bin/less "$file"
+}
+
+# ------------------------------------------------------------------------------
+# Call run() after option parsing
+# ------------------------------------------------------------------------------
+main "$@" ; quit
+
+# End

@@ -232,7 +232,8 @@ run_pack() {
                 [0-9]\)\ *) item="${item/) /)}" ;;
             esac
             # remove some quotes
-            item="${item/ \'-\' / - }"
+            item="${item// \'-\' / - }"
+            item="${item// \'--\' / -- }"
         fi
 
         # line numbering

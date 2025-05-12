@@ -53,7 +53,7 @@ options() {
 # Usage info
 # ------------------------------------------------------------------------------
 usage() {
-    create -c <<!EOF
+    usagecat <<!EOF
 Usage:     $CEN_NAME [-d|-h] [-q|-v] [-A] [-E <text>] [-U <name>] [---]
 
            $CEN_TITLE.

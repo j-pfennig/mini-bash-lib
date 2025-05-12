@@ -8,7 +8,7 @@ CEN_EXIT=0
 CEN_HOOK_MESSAGE='message'
 CEN_HOOK_QUIT='_cen_quit'
 CEN_IDNT=
-CEN_MINI_VERSION='0.07'
+CEN_MINI_VERSION='0.08'
 : "${CEN_VERSION:=$CEN_MINI_VERSION}"
 CEN_ARGS=
 CEN_ARGOPT=
@@ -273,11 +273,11 @@ esac
 [ "$_stat" = 0 -a -z "$_onam" ]&&return 0
 if [ -n "$_otyp" ];then
 [ "$_otyp" = 2 ]&&local -n _vsys="$_onam"||local _vsys
-if [ "$_odel" = '--' ];then
+if [ "$_odel" = -- ];then
 readarray -t _vsys <"$CEN_TMP_SYSO"
 else
 local _sifs="$IFS" _list;readarray -t _list <"$CEN_TMP_SYSO";set +f
-IFS=$'\n' _vsys=(${_list[*]});IFS="$_sifs";set -f
+printf -v IFS "${_odel:-\t\n}";_vsys=(${_list[*]});IFS="$_sifs";set -f
 fi
 [ "$_otyp" = 1 ]&&splitjoin -j "$_onam" -- "${_vsys[@]}"
 fi
@@ -345,7 +345,7 @@ case "${3:--f}" in
 -f)printf -v "$_name" '%s' "${4:-1}";CEN_ARGS=1;;
 -m)[ "${1:-1}" = 1 ]||quit -e $"Conflicting options:" "$4";;
 *)if [ -z "$CEN_ARGOPT" ];then
-[ "$_aarr" != - ]&&[ -z "$_aarr" -o "${_aarr::1}" = '-' ] &&
+[ "$_aarr" != - ]&&[ -z "$_aarr" -o "${_aarr::1}" = - ] &&
 quit -e $"Missing option value:" "--$1" MM
 CEN_ARGS=2;CEN_ARGOPT="$_aarr"
 else
