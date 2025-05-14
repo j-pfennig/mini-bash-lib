@@ -1,9 +1,9 @@
 #!/usr/bin/bash
-CEN_LEGAL="Copyright Dr. J. Pfennig (c) 2007-2025; BSD License"
+CEN_LEGAL="Copyright Dr. J. Pfennig (c) 2024-2025; BSD License"
 CEN_TITLE="Tool that strips comments and extra spaces or quotes"
 
 # use proxy to load mini-bash-lib or centauri-bash-lib (if installed)
-PATH+=":${0%/*}" . _mini_bash_lib -n -t -y - '0.04' || exit 2
+PATH+=":${0%/*}" . _mini_bash_lib -n -t -y - '0.06' || exit 2
 
 # declare global variables ...
 
@@ -16,7 +16,8 @@ CEN_OPT_TRIM=           # see --trim
 CEN_OPT_UGLIFY=         # see --uglify
 CEN_OPT_WORLD=          # see --world
 
-DAT_FOUT=               # output file path
+DAT_FOUT=               # output file path, see inpout()
+DAT_FINP=               # input ...
 DAT_QUIT_CALL=          # used with CEN_HOOK_QUIT
 
 DAT_HELLO=(
@@ -66,46 +67,44 @@ DAT_HELLO=(
 )
 
 # ------------------------------------------------------------------------------
+# Extract documentation: <finp>
+# ------------------------------------------------------------------------------
+run_docu() {
+    local data                                  # load data from input file
+    inpout "$1"                                 # check files, set DAT_Fxxx
+
+    system -r -f -- eval "readarray -t data <\"$DAT_FINP\""
+
+    # process documentation blocks
+    if [ "${CEN_OPT_OUTPUT:--}" = '-' ] ; then
+        doctext "${data[@]}"
+    else
+        doctext "${data[@]}" >"$DAT_FOUT"
+    fi
+}
+
+# ------------------------------------------------------------------------------
 # Edit a script
 # ------------------------------------------------------------------------------
 run_edit() {
-    local inpf inpp
-    system -r -f -- eval "readarray -t inpf <\"$CEN_OPT_REFRESH\""
     [ -w "$CEN_OPT_REFRESH" ] || quit -e $"Not a writable file:" "$CEN_OPT_REFRESH"
+    local libf="${CEN_CMDDATA%.p}"                  # see proxy code, library source
+    [ -s "$libf" ] || quit -e $"Need mini-bash-lib source:" "$libf"
+    inpout '.'
+    local line skip tag1 tag2 outp=() inpp=()
+    system -r -f -- eval "readarray -t inpp <\"$CEN_OPT_REFRESH\""
 
-    ___load_source() {
-        local _iraw _file="${CEN_CMDDATA%.p}"       # see proxy code
-        [ -s "$_file" ] || quit -e $"Need mini-bash-lib source:" "$_file"
-        system -r -f -- eval "readarray -t _iraw <\"$_file\""
-        local _line _skip=1
-        for _line in "${_iraw[@]}" ; do
-            [ -z "$skip" ] && inpp+=("$_line")
-            case "$_line" in
-            '### mini-bash-lib source ###')
-                _skip= ;;
-            '### mini-bash-lib end ###')
-                _ski0=1 ;;
-            esac
-        done
-    }
-
-    ___load_packed() {
-        local _file="${CEN_CMDDATA%.p}.p"           # see proxy code
-        [ -s "$_file" ] || quit -e $"Need packed mini-bash-lib:" "$_file"
-        system -r -f -- eval "readarray -t inpp <\"$_file\""
-    }
-
-    local line skip tag1 tag2 outp=()
-    for line in "${inpf[@]}" ; do
+    for line in "${inpp[@]}" ; do
         [ -z "$skip" ] && outp+=("$line")
         case "$line" in
-        '### mini-bash-lib source ###')
-            ___load_source
-            skip=1 : tag1=2 ; outp+=("${inpp[@]}") ;;
-        '### mini-bash-lib packed ###')
-            ___load_packed
-            skip=1 ; tag1=1 ; outp+=("${inpp[@]}") ;;
-        '### mini-bash-lib end ###')
+        '### mini-bash-lib source ###'*)
+            CEN_OPT_EMPTY=1 ; run_pack "$DAT_FINP" outp
+            skip=1 ; tag1=2 ;;
+        '### mini-bash-lib packed ###'*)
+            CEN_OPT_UGLIFY=1 ; CEN_OPT_EMPTY=1 ; CEN_OPT_TRIM=1
+            run_pack "$DAT_FINP" outp
+            skip=1 ; tag1=1 ;;
+        '### mini-bash-lib end ###'*)
             skip= ; tag2=1 ; outp+=("$line") ;;
         esac
     done
@@ -117,71 +116,79 @@ run_edit() {
 }
 
 # ------------------------------------------------------------------------------
-# Create a script
+# Create a script: <finp>
 # ------------------------------------------------------------------------------
 run_world() {
+    local what='### mini-bash-lib source ###'
+    if [ -n "$CEN_OPT_TRIM" ] ; then        # uglify
+        CEN_OPT_UGLIFY=1 ; CEN_OPT_EMPTY=1
+        what='### mini-bash-lib packed ###'
+    fi
+
     local outp=(
         "#!$BASH"
         'CEN_LEGAL="Copyright <anonymous> (c) 2025; <unknown> License"'
         'CEN_TITLE="A hello world using mini-bash-lib"'
         ''
-        '# use proxy to load mini-bash-lib or centauri-bash-lib (if installed)'
-        'PATH+=":${0%/*}" . _mini_bash_lib - "0.00" || exit 2'
     )
-    outp+=("${DAT_HELLO[@]}")
-    outp+=(
-        '# ------------------------------------------------------------------------------'
-        '# Pass control to app framework'
-        '# ------------------------------------------------------------------------------'
-        'main "$@" ; quit'
-        ''
-        '# End'
-    )
+    if [ -n "$CEN_OPT_EMPTY" -o -n "$CEN_OPT_TRIM" ] ; then
+        [ -n "$CEN_OPT_TRIM" ] && CEN_OPT_UGLIFY=1
+        outp+=(
+            "CEN_VERSION='0.00'"
+            '#CEN_FEATURE_F=1                 # enable --force option'
+            '#CEN_FEATURE_Y=1                 # enable --no|--yes options'
+            "${DAT_HELLO[@]}"
+            '# ------------------------------------------------------------------------------'
+            '# mini-bash-lib source-code: https://github.com/j-pfennig/mini-bash-lib'
+            '# ------------------------------------------------------------------------------'
+            ''
+            "$what"
+        )
+            inpout '.' ; CEN_OPT_EMPTY=1 ; run_pack "$DAT_FINP" outp
+        outp+=('### mini-bash-lib end ###')
+
+    else
+        outp+=(
+            '# use proxy to load mini-bash-lib or centauri-bash-lib (if installed)'
+            'PATH+=":${0%/*}" . _mini_bash_lib - "0.00" || exit 2'
+            "${DAT_HELLO[@]}"
+            '# ------------------------------------------------------------------------------'
+            '# Pass control to app framework'
+            '# ------------------------------------------------------------------------------'
+            'main "$@" ; quit'
+            ''
+            '# End'
+        )
+    fi
     output "$CEN_OPT_OUTPUT" "${outp[@]}"
 }
 
 # ------------------------------------------------------------------------------
-# Create packed library
+# Create packed library: <finp> <vnam>
 # ------------------------------------------------------------------------------
 run_pack() {
-    # load data from input file
-    local data fout file="$1"
-    if [ "$file" = '.' ] ; then         # use library source
-        [ "$CEN_FEATURE_N" = 1 ] || quit $"Try again using option '--mini=1'"
-        file="${CEN_CMDDATA%.p}"        # see proxy code
-    fi
+    local file="$1" data=()             # input array
+    local -n _vout="$2"                 # output array
 
-    [ -f "$file" -a -r "$file" ] || quit -e $"Not a readable file:" "$file"
     system -r -f -- eval "readarray -t data <\"$file\""
 
-    # truncate output file
-    if [ -n "$CEN_OPT_OUTPUT" ] ; then
+    [ "${CEN_OPT_OUTPUT:--}" != '-' ] &&
         message -p $"Read %s lines from '%s'" "${#data[@]}" "${file#$PWD/}"
-        fout="$CEN_OPT_OUTPUT"
-        [ "$fout" = '.' ] && fout="${file}.p"
-        [ "$fout" -ef "$file" ] && quit -e $"Refusing to override input file"
-        create -t -- "$fout"
-        DAT_QUIT_CALL="$CEN_HOOK_QUIT"  # save head of hook chain
-        CEN_HOOK_QUIT='cleanup'         # quit hook to delete bad output
-        DAT_FOUT="$fout"                # used in hook function
+    if [ -n "$CEN_OPT_NUMBER" ] ; then
+        CEN_OPT_EMPTY=1
+    elif [ -z "$CEN_OPT_EMPTY" ] ; then     # just -O, no -U
+        CEN_OPT_EMPTY=1 ; CEN_OPT_TRIM=1
+        [ "${data::3}" = '#!/' ] && _vout+=("$data")
     fi
 
-    # process documentation blocks
-    if [ -n "$CEN_OPT_DOCTEXT" ] ; then
-        if [ -n "$CEN_OPT_OUTPUT" ] ; then
-            doctext "${data[@]}" >"$fout"
-        else
-            doctext "${data[@]}"
-        fi
-        quit
-    fi
-
-    local item itrm tail here line=0 outp=()
+    local item itrm tail here line=0
 
     # loop over input lines
     for item in "${data[@]}" ; do
         if [ "$line" = 0 ] ; then
             itrm="$item"
+        elif [ "${item::2}" = '#°' -a -z "$CEN_OPT_UGLIFY$CEN_OPT_NUMBER" ] ; then
+            _vout+=('') ; item="#${item:2}" ; itrm="$item" ; ((line += 1))
         elif [ "${item::1}" = '#' ] ; then
             item= ; itrm=
         else
@@ -239,59 +246,67 @@ run_pack() {
         # line numbering
         if [ -n "$CEN_OPT_NUMBER" ] ; then
             printf -v item '%4s: %s' "$line" "$item"
+            _vout+=("$item")
         elif [ "$line" != 1 ] ; then
-            outp+=("$item")
+            _vout+=("$item")
         elif [ "${item::2}" != '#!' ] ; then
-            outp+=("$item")
+            _vout+=("$item")
         fi
-
-        # hello world
-        [ -n "$CEN_OPT_WORLD" -a "$line" = 1 ] || continue
-        outp+=(
-            "#!$BASH"
-            'CEN_LEGAL="Copyright <anonymous> (c) 2025; <unknown> License"'
-            'CEN_TITLE="A hello world using mini-bash-lib"'
-            ''
-            "CEN_VERSION='0.00'"
-            '#CEN_FEATURE_F=1                 # enable --force option'
-            '#CEN_FEATURE_Y=1                 # enable --no|--yes options'
-        )
-        outp+=("${DAT_HELLO[@]}")
-        outp+=(
-            '# ------------------------------------------------------------------------------'
-            '# mini-bash-lib source-code: https://github.com/j-pfennig/mini-bash-lib'
-            '# ------------------------------------------------------------------------------'
-            ''
-            '### mini-bash-lib packed ###'
-        )
     done
-
-    # hello world main/quit and file output
-    [ -n "$CEN_OPT_WORLD" ] && outp+=('### mini-bash-lib end ###')
-    output "$fout" "${outp[@]}"
 }
 
 # ------------------------------------------------------------------------------
 # Payload dispatcher
 # ------------------------------------------------------------------------------
 run() {
-    # need one argument - show usage info and quit
-    [ $# = 0 ] && [ -n "$CEN_OPT_WORLD" -o -n "$CEN_OPT_REFRESH" ] && set -- '.'
+    # the one and only no-option argument is <finp> which defaults to '.'
+    [ $# = 0 -a -n "$CEN_OPT_REFRESH" ] && set -- '.'
     [ $# = 1 ] || { usage ; quit -s 1 ; }
 
-    local fout="${CEN_OPT_REFRESH:-$1}" ;
-    if [ "${fout:-.}" != '.' ] && [ -e "$fout" ] ; then
+    # -N defaults to stdout
+    [ -n "$CEN_OPT_NUMBER" -a -z "$CEN_OPT_OUTPUT" ] && CEN_OPT_OUTPUT='-'
+
+    # the options -R and -W provide the <fout> file
+    local fout="${CEN_OPT_REFRESH:-$CEN_OPT_OUTPUT}"
+    [ -z "$fout" ] && quit -e $"Missing option '--output'"
+    if [ "$fout" = '.' ] ; then
+        [ -z "$CEN_OPT_UGLIFY" ] && quit -e $"Only '--uglify' can use '--output=.'"
+    elif [ "$fout" != '-' -a -z "$CEN_OPT_REFRESH" ] && [ -e "$fout" ] ; then
         confirm -n -f $"Replace existing file '%s'" "$fout" || quit -a -t
     fi
 
-    if [ -n "$CEN_OPT_REFRESH" ] ; then
+    if [ -n "$CEN_OPT_DOCTEXT" ] ; then
+        run_docu "$1"
+    elif [ -n "$CEN_OPT_REFRESH" ] ; then
         run_edit
-    elif [ -n "$CEN_OPT_WORLD" -a -z "$CEN_OPT_UGLIFY" ] ; then
-        run_world
+    elif [ -n "$CEN_OPT_WORLD" ] ; then
+        run_world "$1"
     else
-        [ -n "$CEN_OPT_WORLD" ] && CEN_OPT_EMPTY=1
-        run_pack "$1"
+        local outp=() ; inpout "$1" ; run_pack "$DAT_FINP" outp
+        output "$DAT_FOUT" "${outp[@]}"
     fi
+}
+
+# ------------------------------------------------------------------------------
+# Check input and output file: <finp>             (sets DAT_FOUT to real output)
+# ------------------------------------------------------------------------------
+inpout() {
+    local file="$1" fout="$CEN_OPT_OUTPUT"
+    if [ "$file" = '.' ] ; then         # use library source
+        [ "$CEN_FEATURE_N" = 1 ] || quit $"Try again using option '--mini=1'"
+        file="${CEN_CMDDATA%.p}"        # see proxy code
+    fi
+    [ -f "$file" -a -r "$file" ] || quit -e $"Not a readable file:" "$file"
+    DAT_FINP="$file"
+
+    [ -z "$fout" ] && return
+    [ "$fout" = '-' ] && return     # write to stdout
+    [ "$fout" = '.' ] && fout="${file}.p"
+    [ "$fout" -ef "$file" ] && quit -e $"Refusing to override input file"
+    create -t -- "$fout"
+    DAT_QUIT_CALL="$CEN_HOOK_QUIT"  # save head of hook chain
+    CEN_HOOK_QUIT='cleanup'         # quit hook to delete bad output
+    DAT_FOUT="$fout"                # used in hook function
 }
 
 # ------------------------------------------------------------------------------
@@ -393,6 +408,8 @@ docline() {
     [ "${1::2}" = '##' ] && return
     if [ -n "$CEN_OPT_TRIM" ] ; then
         [ "${1::13}" = '# shellcheck ' ] && return
+    elif [ "${1::2}" = '#°' ] ; then
+        echo "#${1:2}" ; return
     fi
     if [ -n "$1" ] ; then
         DAT_DOCTEXT=1 ; printf '%s\n' "$1" ; return
@@ -406,7 +423,14 @@ docline() {
 options() {
     case "$1" in
         # end of option parsing
-        '') [ -n "$CEN_OPT_UGLIFY" ] && CEN_OPT_TRIM=1 ;;
+        '') [ -n "$CEN_OPT_UGLIFY" ] && CEN_OPT_TRIM=1
+            local temp="${CEN_OPT_REFRESH:+1}"
+            temp+="$CEN_OPT_DOCTEXT$CEN_OPT_NUMBER$CEN_OPT_UGLIFY$CEN_OPT_WORLD"
+            [ "${temp:-1}" = 1 ] ||
+                optarg - - -m '--doctext --number --refresh --uglify --world'
+            [ -n "$CEN_OPT_OUTPUT" -a -n "$CEN_OPT_REFRESH" ] &&
+                optarg - - -m '--output --refresh'
+            ;;
 
         -D|--doc*) optarg  'doctext' -   -f ;;      # flag
         -E|--emp*) optarg  'empty'   -   -f ;;      # flag
@@ -437,18 +461,21 @@ Options:   -d --dryrun          show what would be done, make no changes
            -v --verbose         be verbose
            -y --yes             do not prompt for confirmation, assume 'yes'
 
-           -D --doctext         extract documentation text
+           -D --doctext         [*] extract documentation text
            -E --empty           skip empty output lines
-           -N --number          output line numbers
+           -N --number          [*] list line numbers, no comment/empty lines
            -O --output  <fout>  specify an output file
-           -R --refresh <file>  refresh mini-bash-lib embedded in <file>
+           -R --refresh <file>  [*] refresh mini-bash-lib embedded in <file>
            -T --trim            remove leading spaces and some inline comments
-           -U --uglify          enable --trim and remove extra spaces or quotes
-           -W --world           embed <finp> in a 'Hello World' script
+           -U --uglify          [*] enable --trim, strip extra spaces or quotes
+           -W --world           [*] embed <finp> in a 'Hello World' script
+
+           °                    [*] Mutually exclusive options
 
 Arguments: <file>               script containing an embedded mini-bash-lib
            <finp>               input script (use '.' for mini-bash-lib source)
-           <fout>               output file (use '.' to append '.p' to <finp>)
+           <fout>               output file (use '.' to append '.p' to <finp>
+           °                                 or  '-' to write to '/dev/stdout')
 
 Remarks:   In 'centauri-bash-lib' there is a tool named 'uglify' for similar
            purposes. While '$CEN_NAME' is very stupid and barely understands
@@ -456,7 +483,8 @@ Remarks:   In 'centauri-bash-lib' there is a tool named 'uglify' for similar
 
 Examples:  # create a mini-bash-lib based 'hello world':
            $CEN_NAME -W -O hello                        # using the proxy
-           $CEN_NAME -W -U -O hello                     # packed version
+           $CEN_NAME -W -E -O hello                     # embedded library
+           $CEN_NAME -W -T -O hello                     # embedded, packed
 
            # pack mini-bash-lib source (.p file)
            $CEN_NAME -U -E -O . .
@@ -464,13 +492,15 @@ Examples:  # create a mini-bash-lib based 'hello world':
            # refresh embedded mini-bash-lib
            $CEN_NAME -R myfile
 
+           # list non-comment lines with line numbers
+           $CEN_NAME -N -O - myfile
+
            # remove documentation comments from source
-           $CEN_NAME -D -E -O myfile.pack myfile        # keep some comments
-           $CEN_NAME -D -E -T -O myfile.pack myfile     # remove most comments
+           $CEN_NAME -D -E -O myfile.pack myfile
 
            # extract documentation comments
            $CEN_NAME -D -O myfile.doc myfile            # for centaurihelp -U
-           $CEN_NAME -D -O -T myfile.doc myfile         # text only
+           $CEN_NAME -D -T -O myfile.doc myfile         # text only
 
 !EOF
 }

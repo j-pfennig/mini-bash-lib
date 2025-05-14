@@ -1,106 +1,106 @@
 msgid ""
 msgstr "Content-Type: text/plain; charset=UTF-8\n"
 
-#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini-bash-lib:848
+#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini-bash-lib:845
 msgid "%-16s:"
 msgstr "%-18s:"
 
-#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini-bash-lib:851
+#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini-bash-lib:848
 msgid "***ERROR***"
 msgstr "***FEHLER***"
 
-#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini-bash-lib:852
+#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini-bash-lib:849
 msgid "***FATAL ERROR***"
 msgstr "***FATALER FEHLER***"
 
-#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini-bash-lib:859
+#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini-bash-lib:856
 msgid "***WARNING***"
 msgstr "***WARNUNG***"
 
-#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini-bash-lib:912
+#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini-bash-lib:914
 msgid "yes°no° [Y/n]? ° [y/N]? "
 msgstr "ja°nein° [J/n]? ° [j/N]? "
 
-#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini-bash-lib:928
+#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini-bash-lib:930
 msgid "Please enter 'yes' or 'no'"
 msgstr "Bitte 'ja' oder 'nein' eingeben"
 
-#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini-bash-lib:951
+#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini-bash-lib:953
 msgid "Existing file"
 msgstr "Datei existiert"
 
-#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini-bash-lib:953
+#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini-bash-lib:955
 msgid "Create file"
 msgstr "Datei erstellen"
 
-#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini-bash-lib:965
+#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini-bash-lib:967
 msgid "Failed to create file:"
 msgstr "Dateierstellung fehlgeschlagen:"
 
-#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini-bash-lib:979
+#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini-bash-lib:981
 msgid "Execute"
 msgstr "Ausführen"
 
-#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini-bash-lib:981
+#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini-bash-lib:983
 msgid "Skip"
 msgstr "Auslassen"
 
-#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini-bash-lib:1019
+#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini-bash-lib:1021
 msgid "Not a folder:"
 msgstr "Ist kein Verzeichnis:"
 
-#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini-bash-lib:1026
+#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini-bash-lib:1028
 msgid "Current folder"
 msgstr "Aktuelles Verz."
 
-#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini-bash-lib:1112
+#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini-bash-lib:1113
 msgid "Command '%s' not found"
 msgstr "Kommando '%s' nicht gefunden"
 
-#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini-bash-lib:1140
+#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini-bash-lib:1141
 msgid "Running '%s' failed (status %s)"
 msgstr "Ausführen von '%s' fehlgeschlagen (Status %s)"
 
-#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini-bash-lib:1159
+#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini-bash-lib:1160
 msgid "Temporary file"
 msgstr "Temporäre Datei"
 
-#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini-bash-lib:1187
+#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini-bash-lib:1188
 msgid "Option '--help' is not implemented"
 msgstr "Option '--help' ist nicht implementiert"
 
-#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini-bash-lib:1194
+#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini-bash-lib:1195
 msgid "<unknown Author/Licence>"
 msgstr "<unbekannter Autor/Lizenz>"
 
-#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini-bash-lib:1199
+#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini-bash-lib:1200
 msgid "Unknown option:"
 msgstr "Unbekannte Option:"
 
-#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini-bash-lib:1212
+#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini-bash-lib:1213
 msgid "Conflicting options:"
 msgstr "Unvereinbare Optionen:"
 
-#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini-bash-lib:1215
+#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini-bash-lib:1216
 msgid "Missing option value:"
 msgstr "Wert für Option fehlt:"
 
-#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini-bash-lib:1235
+#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini-bash-lib:1236
 msgid "Terminated after error"
 msgstr "Nach Fehler beendet"
 
-#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini-bash-lib:1238
+#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini-bash-lib:1239
 msgid "Terminated"
 msgstr "Beendet"
 
-#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini-bash-lib:1251
+#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini-bash-lib:1252
 msgid "Script exits"
 msgstr "Skript beendet"
 
-#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini-bash-lib:1273
+#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini-bash-lib:1274
 msgid "***ABORT***"
 msgstr "***ABBRUCH***"
 
-#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini-bash-lib:1273
+#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/mini-bash-lib:1274
 msgid "Command not found:"
 msgstr "Kommando nicht gefunden:"

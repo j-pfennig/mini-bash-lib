@@ -1,7 +1,7 @@
 #!/usr/bin/bash
-# ------------------------------------------------------------------------------
-# mini-bash-lib         for bash 5.x
-# ------------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
+## mini-bash-lib         for bash 5.x
+## -----------------------------------------------------------------------------
 ## This script can be used in three different ways:
 ##
 ##   1.  Stand alone:    implement your code in run() options() and usage()
@@ -26,9 +26,9 @@
 ##       }
 ##       main "$@" ; quit
 
-# ------------------------------------------------------------------------------
-# The following text is formatted for: centaurihelp -U <file>
-# ------------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
+## The following text is formatted for: centaurihelp -U <file>
+## -----------------------------------------------------------------------------
 
 # ------------------------------------------------------------------------------
 # content + Documentation
@@ -801,12 +801,12 @@ if [ -z "$CEN_HOOK_MESSAGE" ] ; then    # centauri-bash-lib not loaded ...
     CEN_STDERR=42
     eval exec "$CEN_STDOUT>&1" "$CEN_STDERR>&2"
 
-    CEN_EXIT=0                  # exit code
-    CEN_HOOK_MESSAGE='message'
-    CEN_HOOK_QUIT='_cen_quit'   # called by quit()
-    CEN_IDNT=                   # Flag for indentation
-    CEN_MINI_VERSION='0.08'
+    CEN_MINI_VERSION='0.09'
     : "${CEN_VERSION:=$CEN_MINI_VERSION}"
+
+    CEN_HOOK_MESSAGE=message
+    CEN_HOOK_QUIT=_cen_quit # called by quit()
+    CEN_IDNT=               # Flag for indentation
 
     CEN_ARGS=               # option arg count  (0:=error  1:=flag only  2:has value)
     CEN_ARGOPT=             # potential option argument
@@ -822,6 +822,7 @@ if [ -z "$CEN_HOOK_MESSAGE" ] ; then    # centauri-bash-lib not loaded ...
 
     CEN_VERB=1              # option -v  (0:=error only  1:=normal  2:=trace)
     CEN_YESNO=              # option -n|-y
+    CEN_EXIT=0              # exit code
 }
 
 # some CEN_xxx variables are set in the proxy
@@ -830,12 +831,7 @@ if [ -z "$CEN_HOOK_MESSAGE" ] ; then    # centauri-bash-lib not loaded ...
 # all output functions are implemented via message()
 # ------------------------------------------------------------------------------
 
-warning() { message -w "$@" ; }
-error()   { message -e -l "$@" ; return "$CEN_EXIT" ; }
-fatal()   { [ "$1" = '-t' ] && set -- "${@:2}" ; message -f -l "$@" ; quit ; }
-trace()   { [ "$CEN_VERB" -lt 2 ] && return 0 ; message "$@" ; }
-
-# write a message stderr: [-a|-i] [-m] [-p] [--] <text>...
+#° write a message to stderr: [-a|-i] [-m] [-p] [--] <text>...
 message() {
     local _idnt="$CEN_NAME:" _exit _mesg _olog="$CEN_VERB" _opre _oqui _omul _opri
     while [ "${1::1}" = '-' ] ; do
@@ -875,11 +871,16 @@ message() {
     CEN_IDNT=1
 }
 
+warning() { message -w "$@" ; }
+error()   { message -e -l "$@" ; return "$CEN_EXIT" ; }
+fatal()   { [ "$1" = '-t' ] && set -- "${@:2}" ; message -f -l "$@" ; quit ; }
+trace()   { [ "$CEN_VERB" -lt 2 ] && return 0 ; message "$@" ; }
+
 # ------------------------------------------------------------------------------
 # various functions
 # ------------------------------------------------------------------------------
 
-# get input: [-a|-i] [-d <dflt>] [-f] [-p -|<info>] [-s <vnam>] [-u] [-y|-n] <text>...
+#° get input: [-a|-i] [-d <dflt>] [-f] [-p -|<info>] [-s <vnam>] [-u] [-y|-n] <text>...
 confirm() {
     local _ofmt _oupc _what=1 _repl _vnam='CEN_CONFIRM' _idnt="$CEN_NAME:" _info _defn _text
     while [ "${1::1}" = '-' ] ; do
@@ -935,7 +936,7 @@ confirm() {
     [ "$_repl" = "$_locy" ]                 # return status
 }
 
-# file output: create [-r] [-t] [-c] [-v <vnam>] [--] <path>|-
+#° file output: create [-r] [-t] [-c] [-v <vnam>] [--] <path>|-
 create() {
     local _rdry _rtru _vnam _fout _darr
     while [ "${1::1}" = '-' ] ; do
@@ -966,7 +967,7 @@ _cen_create_file() {
     true >"$1" 2>/dev/null && return 0 ; error $"Failed to create file:" "$1"
 }
 
-# check --dryrun option: [-r] [<mesg>...]
+#° check --dryrun option: [-r] [<mesg>...]
 dryrun() {
     local _rdry="$CEN_OPT_DRYRUN"
     while [ "${1::1}" = '-' ] ; do
@@ -982,7 +983,7 @@ dryrun() {
     message -a -c $"Skip" "$@" ; return 0
 }
 
-# run another tool using --embed: -m <fake> -a|-s <vnam> <system-opts> <tool> [--] <arg>...
+#° run another tool using --embed: -m <fake> -a|-s <vnam> <system-opts> <tool> [--] <arg>...
 embed() {
     local _stat _opts=()
     while [ "${1::1}" = '-' ] ; do
@@ -999,7 +1000,7 @@ embed() {
     [ "$_stat" = 3 ] && quit -s 3 ; return "$_stat"
 }
 
-# create dir, set current dir: [-f|-q] [-m] [-c|-p] [--] <path>
+#° create dir, set current dir: [-f|-q] [-m] [-c|-p] [--] <path>
 folder() {
     local _ochg _omak _oerr='error' _oopt='-e -p'
     while [ "${1::1}" = '-' ] ; do
@@ -1027,7 +1028,7 @@ folder() {
     trace -a -c $"Current folder" "$PWD" ; return 0
 }
 
-# handle word split or join: -j|-s <vnam> -d <deli> [--] <data>...
+#° handle word split or join: -j|-s <vnam> -d <deli> [--] <data>...
 # shellcheck disable=SC2206
 # shellcheck disable=SC2059
 splitjoin() {
@@ -1051,14 +1052,13 @@ splitjoin() {
 }
 
 # some simple file-system commands:
-##   copy    [-f|-q] [-r] [-a] [-u] [--] <arg>...
-##   rename  [-f|-q] [-r]           [--] <arg>...
-##   remove  [-f|-q] [-r] [-d] [-o] [--] <arg>...
-##   symlink [-f|-q] [-r] [-n] [-r] [--] <arg>...
-
+#° conveniency: copy    [-f|-q] [-r] [-a] [-u] [--] <arg>...
 copy() { _cen_simple_cmd 'cp' "$@" ; }        # -a -u
+#° conveniency: rename  [-f|-q] [-r]           [--] <arg>...
 rename() { _cen_simple_cmd 'mv' "$@" ; }      # -o
+#° conveniency: remove  [-f|-q] [-r] [-d] [-o] [--] <arg>...
 remove() { _cen_simple_cmd 'rm' -F "$@" ; }   # -d -o
+#° conveniency: symlink [-f|-q] [-r] [-n] [-r] [--] <arg>...
 symlink() { _cen_simple_cmd 'ln' -S "$@" ; }  # -n -r
 
 _cen_simple_cmd() {
@@ -1084,7 +1084,7 @@ _cen_simple_cmd() {
     system $_oerr $_orun -- "${_args[@]}" "$@"
 }
 
-# run a command: <opt>... [--] <cmd> <arg>...
+#° run a command: <opt>... [--] <cmd> <arg>...
 system() {
     local _stat _rdry _fchk _olou _onam _ored _otyp _odel _oerr=':' _oqui=':'
     # _ored (output redir)  '': none  0: /dev/null   1: stdout+err  2: stderr only
@@ -1143,7 +1143,7 @@ system() {
     $_oqui ; return "$_stat"
 }
 
-# create transient file: [-n] [-r] [-s <vnam>]
+#° create transient file: [-n] [-r] [-s <vnam>]
 tmpfile() {
     local _vtmp='CEN_TEMPFILE' _rdry _crea=1
     local _temp="$CEN_TMP_BASE$CEN_TMP_INDX-$BASHPID"
@@ -1162,7 +1162,7 @@ tmpfile() {
  }
 
 # ------------------------------------------------------------------------------
-# main and quit
+#° enter the framework: <opts>... [---] <args>...
 # ------------------------------------------------------------------------------
 # shellcheck disable=SC2034
 main() {
@@ -1204,7 +1204,7 @@ main() {
     PATH=' ' type -t run &>/dev/null || return 2 ; run "$@"
 }
 
-# get option setting: <name> <vnam>|- [-t|-f|-m] [<value>]
+#° option setting: <name> <vnam>|- [-t|-f|-m] [<value>]
 optarg() {
     local _name="${2:--}" _aarr="$CEN_ACTARR"
     [ "$_name" = '-' ] && _name="CEN_OPT_${1^^}"
@@ -1213,7 +1213,7 @@ optarg() {
     -m) [ "${1:-1}" = 1 ] || quit -e $"Conflicting options:" "$4" ;;
     *)  if [ -z "$CEN_ARGOPT" ] ; then
             [ "$_aarr" != '-' ] && [ -z "$_aarr" -o "${_aarr::1}" = '-' ] &&
-                quit -e $"Missing option value:" "--$1" MM
+                quit -e $"Missing option value:" "--$1"
             CEN_ARGS=2 ; CEN_ARGOPT="$_aarr"
         else
             CEN_ARGS=1
@@ -1222,7 +1222,7 @@ optarg() {
     esac
 }
 
-# terminate script: [-a|-i] [-p] [-s <code>] [-e|-t|-u] [--] <text>...
+#° terminate script: [-a|-i] [-p] [-s <code>] [-e|-t|-u] [--] <text>...
 quit() {
     "$CEN_HOOK_QUIT" "$@"
 }
@@ -1252,7 +1252,7 @@ _cen_quit() {
     trace -a -c $"Script exits" "STATUS=$CEN_EXIT" ; exit "$CEN_EXIT"
 }
 
-# copy usage message to stdout: [-l]
+#° copy usage message to stdout: [-l]
 usagecat() {
     local _larr _labl _line ; readarray -t -u 0 _larr
     for _line in "${_larr[@]}" ; do
@@ -1267,7 +1267,7 @@ usagecat() {
 }
 
 # ------------------------------------------------------------------------------
-# command not found runs in a sub-shell, must call quit() indirectly via signal
+#° command not found runs in a sub-shell, must call quit() indirectly via signal
 # ------------------------------------------------------------------------------
 command_not_found_handle() {
     set +xeE ; exec 1>&"$CEN_STDOUT" 2>&"$CEN_STDERR"

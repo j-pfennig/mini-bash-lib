@@ -1,9 +1,9 @@
 #!/usr/bin/bash
-CEN_LEGAL="Copyright Dr. J. Pfennig (c) 2007-2025; BSD License"
+CEN_LEGAL="Copyright Dr. J. Pfennig (c) 2024-2025; BSD License"
 CEN_TITLE="Tool to generate gnu gettxt-tools internationalization"
 
 # use proxy to load mini-bash-lib or centauri-bash-lib (if installed)
-PATH+=":${0%/*}" . _mini_bash_lib -t - '0.03' || exit 2
+PATH+=":${0%/*}" . _mini_bash_lib -t - '0.04' || exit 2
 
 # declare global variables ...
 
@@ -140,7 +140,6 @@ run() {
     system -c -f msgfmt msguniq msgmerge
 
     # loop over languge folders ...
-    folder -c -f -- "$orig"
     for item in "${dirs[@]}" ; do
         [ -n "$lang" -a "$lang" != "${item%/*}" ] && continue
         case "$1" in

@@ -4,12 +4,11 @@ if [ -z "$CEN_HOOK_MESSAGE" ];then
 CEN_STDOUT=41
 CEN_STDERR=42
 eval exec "$CEN_STDOUT>&1" "$CEN_STDERR>&2"
-CEN_EXIT=0
-CEN_HOOK_MESSAGE='message'
-CEN_HOOK_QUIT='_cen_quit'
-CEN_IDNT=
-CEN_MINI_VERSION='0.08'
+CEN_MINI_VERSION='0.09'
 : "${CEN_VERSION:=$CEN_MINI_VERSION}"
+CEN_HOOK_MESSAGE=message
+CEN_HOOK_QUIT=_cen_quit
+CEN_IDNT=
 CEN_ARGS=
 CEN_ARGOPT=
 CEN_ACTARR=
@@ -22,11 +21,8 @@ CEN_TMP_SYSO=
 CEN_TMPFILE=
 CEN_VERB=1
 CEN_YESNO=
+CEN_EXIT=0
 }
-warning(){ message -w "$@";}
-error(){ message -e -l "$@";return "$CEN_EXIT";}
-fatal(){ [ "$1" = '-t' ]&&set -- "${@:2}";message -f -l "$@";quit;}
-trace(){ [ "$CEN_VERB" -lt 2 ]&&return 0;message "$@";}
 message(){
 local _idnt="$CEN_NAME:" _exit _mesg _olog="$CEN_VERB" _opre _oqui _omul _opri
 while [ "${1::1}" = - ];do
@@ -63,6 +59,10 @@ fi
 echo "$_idnt" "$_mesg" >&2
 CEN_IDNT=1
 }
+warning(){ message -w "$@";}
+error(){ message -e -l "$@";return "$CEN_EXIT";}
+fatal(){ [ "$1" = '-t' ]&&set -- "${@:2}";message -f -l "$@";quit;}
+trace(){ [ "$CEN_VERB" -lt 2 ]&&return 0;message "$@";}
 confirm(){
 local _ofmt _oupc _what=1 _repl _vnam='CEN_CONFIRM' _idnt="$CEN_NAME:" _info _defn _text
 while [ "${1::1}" = - ];do
@@ -346,7 +346,7 @@ case "${3:--f}" in
 -m)[ "${1:-1}" = 1 ]||quit -e $"Conflicting options:" "$4";;
 *)if [ -z "$CEN_ARGOPT" ];then
 [ "$_aarr" != - ]&&[ -z "$_aarr" -o "${_aarr::1}" = - ] &&
-quit -e $"Missing option value:" "--$1" MM
+quit -e $"Missing option value:" "--$1"
 CEN_ARGS=2;CEN_ARGOPT="$_aarr"
 else
 CEN_ARGS=1

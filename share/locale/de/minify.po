@@ -1,10 +1,54 @@
 msgid ""
-msgstr "Content-Type: text/plain; charset=UTF-8"
+msgstr "Content-Type: text/plain; charset=UTF-8\n"
 
-#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/minify:291
+#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/minify:90
+msgid "Not a writable file:"
+msgstr "Keine schreibbare Datei:"
+
+#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/minify:92
+msgid "Need mini-bash-lib source:"
+msgstr "Brauche mini-bash-lib Quellentext:"
+
+#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/minify:111
+msgid "File not tagged as embedding mini-bash-lib"
+msgstr "Datei nicht zur Einbettung von mini-bash-lib makiert"
+
+#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/minify:176
+msgid "Read %s lines from '%s'"
+msgstr "%s Zeilen aus '%s' gelesen"
+
+#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/minify:271
+msgid "Missing option '--output'"
+msgstr "Option '--output' fehlt"
+
+#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/minify:273
+msgid "Only '--uglify' can use '--output=.'"
+msgstr "Nur '--uglify' can '--output=.' verwenden "
+
+#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/minify:275
+msgid "Replace existing file '%s'"
+msgstr "Ersetze vorhandene Datei '%s'"
+
+#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/minify:296
+msgid "Try again using option '--mini=1'"
+msgstr "Bitte mit Option '--mini=1' aufrufen"
+
+#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/minify:299
+msgid "Not a readable file:"
+msgstr "Keine lesbare Datei:"
+
+#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/minify:305
+msgid "Refusing to override input file"
+msgstr "Verweigerung die Eingabedatei zu überschreiben"
+
+#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/minify:321
+msgid "Wrote %s lines into '%s'"
+msgstr "%s Zeilen in '%s' geschrieben"
+
+#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/minify:330
 msgid "No error, keep output"
 msgstr "Ohne Fehler, Ausgabe behalten"
 
-#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/minify:293
+#: /home/local/soho/mini-bash-lib/src/mini-bash-lib/minify:332
 msgid "Remove output after error:"
 msgstr "Ausgabe nach Fehler entfernen:"
