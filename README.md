@@ -1,7 +1,7 @@
 **'mini-bash-lib' is a small source only bash application frame-work**
 
-It can be installed as shared source or it can be embeded directly into scripts.
-For the shared source installation it supports internationalisation (using GNU the
+It can be installed as shared source or it can be embedded directly into scripts.
+For the shared source installation it supports internationalization (using GNU the
 gettext tool).
 
 The library was written to be small and easy to use. It has only 1% of the size of
@@ -54,7 +54,7 @@ With internationalization and tools:
                 ├── mini-bash-lib
                 ├── mini-bash-lib.p
                 └── minify
-  
+
 Bare minimum for using shared scripts:
 
         .

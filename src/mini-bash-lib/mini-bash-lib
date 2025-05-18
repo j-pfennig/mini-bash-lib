@@ -175,7 +175,7 @@
 #
 # Proxy             Using a proxy to load mini-bash-lib or centauri-bash-lib
 # Embedding         Embedding mini-bash-lib in a script, packing to source
-# Framework         Application framwork: main - options - usage - run - quit
+# Framework         Application framework: main - options - usage - run - quit
 # Error handling    Creating robust scripts: error - quit - trace - dryrun
 #   error -t        # status test
 #   error -q        # test and call quit -e
@@ -185,12 +185,12 @@
 # ------------------------------------------------------------------------------
 
 # ------------------------------------------------------------------------------
-# proxy + Using the proxy to sharing the library and to support i10n
+# proxy + Using the proxy to sharing the library and to support I10n
 #
 #+Purpose: Instead of embedding the library source into each script, a proxy
 # can be used to locate and load the library source in the file system tree.
 # The proxy also enables coexistence with centauri-bash-lib and allows to load
-# GNU [[gettext]] translations (i10n).
+# GNU [[gettext]] translations (I10n).
 #
 #+Call: The proxy file is **_mini_bash_lib**. It is located using **PATH** and
 # gets sourced by bash:
@@ -208,7 +208,7 @@
 # Example:  See: **/usr/share/doc/mini-bash-lib/Examples/shared**
 #
 #+Usage: The proxy code must be in then same folder as the library itself. The
-# best way to using it is symlinking the proxy from **/usr/local/bin** to the
+# best way to using it is sym linking the proxy from **/usr/local/bin** to the
 # installation folder. Obviously **/usr/local/bin** must be in your **PATH**:
 #
 #.      cd /usr/local/bin
@@ -281,10 +281,10 @@
 # ------------------------------------------------------------------------------
 # options + Callback: Command Line Option Parser
 #
-#+Purpose: Handle the parsing and validation of command line arguemnts
+#+Purpose: Handle the parsing and validation of command line arguments
 #
 #+This function is called for each command line option with the option and
-# the optional option arguemt as parameters. After this the function gets
+# the optional option argument as parameters. After this the function gets
 # called again without parameters to signal the end of option processing.
 #
 #+The framework will remove all parsed options from the argument list that
@@ -299,11 +299,11 @@
 # ------------------------------------------------------------------------------
 # quit_hook + Callback: Cleaning up before Termination
 #
-#+Purpose: Allows a script funtion to be called when terminating.
+#+Purpose: Allows a script function to be called when terminating.
 #
 #+Notes:   This CEN_HOOK_QUIT implementation is centauri-bash-lib compatible
 #          but receives a different set of arguments. In mini-bash-lib all
-#          [[quit()]] arguemnts are passed, which is not the case for
+#          [[quit()]] arguments are passed, which is not the case for
 #          centauri-bash-lib.
 #
 #+         It is important to call the next entry of the hook chain from
@@ -383,7 +383,7 @@
 #
 # Arguments:<dflt>          final part of prompt. Example: " [OK]? "
 #           <text>          prompt message
-#           <vnam>          name of a variable to receice input
+#           <vnam>          name of a variable to receive input
 #           <what>  -       ask for free text input
 #                   +       ask for a password (no echo)
 #                   .       append ' [<dflt>]: ' to prompt text
@@ -568,7 +568,7 @@
 #           (3) optarg <test> - -m <args>
 #
 # Options:  -f      flag option, set <vnam> to "1"
-#           -m      report conflicting ooptions
+#           -m      report conflicting options
 #           -t      text option, set <vnam> to option argument or <valu>
 #
 # Arguments:<name>  option long name
@@ -629,7 +629,7 @@
 #
 # Arguments:<deli>  list of single char field delimiters (processed via printf)
 #           <varr>  name of array variable for split result
-#           <vstr>  name of string variable for joiin result
+#           <vstr>  name of string variable for join result
 #           <text>  any input data
 #
 # Return:   **true** on success
@@ -674,7 +674,7 @@
 #           -z  capture **stderr** only. do not interfere with **stdout**
 #
 # Arguments:<tool>  external or builtin command to use
-#           <arg>   arguemnts for <tool>
+#           <arg>   arguments for <tool>
 #           <deli>  word/line delimiter, C-style syntax
 #           <vnam>  name of a string or array variable
 #
@@ -686,7 +686,7 @@
 #           keep new-line chars in returned data.
 #
 #+Notes:    mini-bash-lib does not explicitly support bash loadables. So system
-#           makes no difference beween builtin are external commands.
+#           makes no difference between builtin are external commands.
 #
 #+          system cannot by used recursively, so better don't call functions.
 #
@@ -903,7 +903,7 @@ confirm() {
     # just read text and return it
     if [ -z "$_what" ] ; then
         [ "$_info" = '-' ] && _info=': '
-        read -p -r "$_idnt $_text$_info" _repl ; CEN_IDNT=1
+        read -rp "$_idnt $_text$_info" _repl ; CEN_IDNT=1
         [ -z "$_repl" ] && _repl="$_defn"
         [ -z "$_oupc" ] && _repl="${_repl,,}"
         [ -n "$_vnam" ] && printf -v "$_vnam" '%s' "$_repl"
