@@ -1,0 +1,80 @@
+<!doctype html>
+<html>
+<head>
+<meta http-equiv="content-type" content="text/html; charset=utf-8">
+<style type="text/css">
+td, th { border: 1px solid #c3c3c3; padding: 0 3px 0 3px; }
+table { border-collapse: collapse; }
+img { max-width: 100%; }
+body {  font-size: large; margin-top: 6mm; margin-bottom: 3mm; }
+h3   {  font-weight: bold; color: blue; background-color:
+        rgb(220,220,220); border: 1px solid rgb(128,128,128);
+        padding: 2pti; margin-top: 8mm; }
+</style>
+<meta name="generator" content="ReText 8.0.0">
+<title>README</title>
+<style type="text/css">
+</style>
+</head>
+<body>
+<h3>'mini-bash-lib' is a small source only bash application frame-work</h3>
+<p>It can be installed as shared source or it can be embedded directly into scripts.
+For the shared source installation it supports internationalization (using GNU the
+gettext tool).</p>
+<p>The library was written to be small and easy to use. It has only 3% of the size of
+the larger 'centauri-bash-lib' framework. The packed size is roughly 400 lines and
+11 kByte.</p>
+<h3>centauri-bash-lib compatibility and coexistence</h3>
+<p>The 'mini-bash-lib' framework is stand-alone but is compatible with 'centauri-bash-lib'.
+In a shared source installation 'mini-bash-lib' is loaded via a small proxy. This proxy
+will automatically load 'centauri-bash-lib' if installed and not otherwise disabled.</p>
+<h3>Source tree, installation</h3>
+<p>The sources are organized in a FSH hierarchy structure so that the release tar can be
+directly expanded into the <strong>/usr</strong> folder:</p>
+<pre><code>    tar --directory=/usr --strip-components=1 --exclude=README.md -xaf &lt;release-tar&gt;
+</code></pre>
+<p>Documentation and examples are at:</p>
+<pre><code>    ./share/doc/mini-bash-lib
+</code></pre>
+<h3>Minimal source tree</h3>
+<p>With internationalization and tools:</p>
+<pre><code>    .
+    ├── bin
+    │   ├── mini10 -&gt; ../src/mini-bash-lib/mini10
+    │   ├── _mini_bash_lib -&gt; ../src/mini-bash-lib/_mini_bash_lib
+    │   └─ minify -&gt; ../src/mini-bash-lib/minify
+    ├── share
+    │   ├── doc
+    │   │   └── mini-bash-lib
+    │   │       ├── default.css             # for html doc
+    │   │       ├── default.js              # ...
+    │   │       ├── mini-bash-lib.html      # doc as html
+    │   │       ├── mini-bash-lib.txt       # doc as text
+    │   │       └── README.html             # overview
+    │   └── locale                          # localization ...
+    │       └── de
+    │           └── LC_MESSAGES
+    │               ├── mini10.mo
+    │               ├── mini-bash-lib.mo
+    │               └── minify.mo
+    └── src
+        └── mini-bash-lib
+            ├── mini10                      # l10n tool
+            ├── _mini_bash_lib              # proxy
+            ├── mini-bash-lib               # library source
+            ├── mini-bash-lib.p             # library packed
+            └── minify                      # utility
+</code></pre>
+<p>Bare minimum for using shared scripts:</p>
+<pre><code>    .
+    ├── bin
+    │   └── _mini_bash_lib -&gt; ../src/mini-bash-lib/_mini_bash_lib
+    └── src
+        └── mini-bash-lib
+            ├── _mini_bash_lib
+            └── mini-bash-lib.p
+</code></pre>
+<p><em>End</em></p>
+
+</body>
+</html>
