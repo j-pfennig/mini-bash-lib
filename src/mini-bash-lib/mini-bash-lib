@@ -157,15 +157,21 @@
 #
 #+The framework imposes a simple source structure and control flow:
 #
-# Source:   (A1) Load the proxy                         # shared version
+# Proxy: Using a proxy to load mini-bash-lib or centauri-bash-lib
+#
+#           (A1) Load the proxy                         # shared version
 #           (A2) Script code
-#           (A3) Execute 'main "$@" ; quit'
+#           (A3) Execute 'main "$@" ; quit'             # invoke, run, exit
+#
+# Embeded: Embedding mini-bash-lib in a script, using packed source
 #
 #           (B1) Script code                            # embedded version
 #           (B2) Embedded library code
-#           (B3) Execute 'main "$@" ; quit'
+#           (B3) Execute 'main "$@" ; quit'             # invoke, run, exit
 #
-# Control°Flow:
+#
+# Framework: Control flow: main - options - usage - run - quit
+#
 #           (1) [[main]]()                  # invoke framework
 #           (2)     [[options]]()           # optional: command line parser
 #           (3) [[run]]()                   # call by [[main()]]
@@ -173,19 +179,21 @@
 #           (5) [[quit()]]                  # leave framework
 #           (6)     [[quit_hook]]           # optional: custom clean-ups
 #
-# Proxy             Using a proxy to load mini-bash-lib or centauri-bash-lib
-# Embedding         Embedding mini-bash-lib in a script, packing to source
-# Framework         Application framework: main - options - usage - run - quit
-# Error handling    Creating robust scripts: error - quit - trace - dryrun
-#   error -t        # status test
-#   error -q        # test and call quit -e
+# Errors: Creating robust scripts: error - quit - trace - dryrun
 #
-#   quit -e         # 'terminated after error'
-#   quit -t         # 'terminated'
+#           dryrun          # test for --dryrun command line option
+#
+#           error -t        # status test, example: while error -t ; do ...
+#           error -q        # test and call quit -e
+#
+#           quit -e         # 'terminated after error'
+#           quit -t         # 'terminated'
+#
+#           trace           # trace message if --trace cmd line option is set
 # ------------------------------------------------------------------------------
 
 # ------------------------------------------------------------------------------
-# proxy + Using the proxy to sharing the library and to support I10n
+# proxy + Using the proxy for sharing the library and to support I10n
 #
 #+Purpose: Instead of embedding the library source into each script, a proxy
 # can be used to locate and load the library source in the file system tree.
@@ -248,7 +256,7 @@
 # ------------------------------------------------------------------------------
 
 # ------------------------------------------------------------------------------
-# main + Callback: Invoking the framework, option parsing
+# main + Invoking the framework, option parsing
 #
 # command°line:
 #+The main() function is the entry point for a script's code. It parses command
@@ -258,7 +266,7 @@
 #+      The framework implements main(), the **run()** function must be implemented
 #       by the user script.
 #
-#+options: The framework implements a few options by default, see below. If a
+#+Options: The framework implements a few options by default, see below. If a
 # script implements an [[options]]() function, this gets called before the internal
 # implementation. For each command line option the options function is called once,
 # see [[optarg()]]. When all options were processed ... empty call ...
@@ -293,6 +301,20 @@
 #+A typical implementation will use a "case" statement and call [[optarg()]]
 # for each option. Any error will cause the framework not to call [[run]]().
 #
+#.Example:  CEN_OPT_BASE=               # set via optarg
+#.          CEN_OPT_DROP=               # ...
+#.
+#.          options() {
+#.              case "$1" in            # "$2" is opt. value or next option
+#.                  -B|--bas*)
+#.                      optarg  'base'       -   -t ;; # text: CEN_OPT_BASE=<value>
+#.                  -D|--dro|--drop)
+#.                      optarg  'drop'       -   -f ;; # flag: CEN_OPT_DROP=1
+#.                  -U|--upp*)
+#.                      optarg  'uppercase'  -   -t "{2^^}" ;;
+#.              esac
+#.          }
+#
 #+Important: **DO NOT** 'exit' or quit from inside this function
 # ------------------------------------------------------------------------------
 
@@ -323,8 +345,8 @@
 #.         CEN_HOOK_QUIT='cleanup'         # quit hook function
 #
 #.         # call quit hook chain before exec
-#          quit -h
-#          system -e exec something        # will not return from exec
+#.         quit -h
+#.         system -e exec something        # will not return from exec
 #
 #+Important: **DO NOT** 'exit' or quit from inside this function
 # ------------------------------------------------------------------------------
@@ -563,9 +585,9 @@
 # ------------------------------------------------------------------------------
 # optarg - Option setter for use in options() call-back
 #
-# Call:     (1) optarg <name> <vnam>|- -f
-#           (2) optarg <name> <vnam>|- -t [<text>]
-#           (3) optarg <test> - -m <args>
+# Call:     (1) optarg <name> <vnam>|- -f [<valu>]
+#           (2) optarg <name> <vnam>|- -t [<valu>]
+#           (3) optarg <test> - -m <info>
 #
 # Options:  -f      flag option, set <vnam> to "1"
 #           -m      report conflicting options
@@ -573,10 +595,15 @@
 #
 # Arguments:<name>  option long name
 #           <test>  report conflict if not empty or 1
-#           <text>  appended to 'Conflicting options:'
+#           <info>  appended to 'Conflicting options:'
+#           <value>  optionally override to option value
 #           <vnam>  name of a variable to be set. If "-" the name is generated
-#                   from name like: CEN_OPT_<name>
-#           <valu>  default used when the option argument is "-"
+#                   from name like: CEN_OPT_<name> (in uppercase)
+#
+#.Examples: optarg 'example' - -f ;;                        # simple flag
+#.          optarg 'count' - -f $((CEN_OPT_COUNT + 1)) ;;   # override flag value
+#.          optarg 'text'  - -t "${2^^}" ;;                 # convert to uppercase
+#.          optarg "$CEN_OPT_NO$CEN_OPT_YES" - -m "Say yes or no!"
 #
 # Return:   **true** on success
 # ------------------------------------------------------------------------------
@@ -1218,7 +1245,7 @@ optarg() {
         else
             CEN_ARGS=1
         fi
-        [ "$CEN_ARGOPT" = '-' ] && CEN_ARGOPT="${4:--}" ; printf -v "$_name" '%s' "$CEN_ARGOPT"
+        [ $# -gt 3 ] && CEN_ARGOPT="$4" ; printf -v "$_name" '%s' "$CEN_ARGOPT"
     esac
 }
 

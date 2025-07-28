@@ -60,7 +60,7 @@ Note: you can use 'less -R ...' to read this text
            [4mfatal[0m       [[1m-m[0m|[1m-p[0m] [[1m--[0m] [3mtext[0m...
            [4mfolder[0m      [[1m-c[0m] [[1m-m[0m] [[1m-p[0m] [[1m-f[0m|[1m-q[0m] [[1m--[0m] [3mpath[0m
            [4mmessage[0m     [[1m-a[0m|[1m-i[0m] [[1m-c[0m [3mlabl[0m] [[1m-m[0m|[1m-p[0m] [[1m--[0m] [3mtext[0m...
-           [4moptarg[0m      [3mname[0m [3mvnam[0m|- [[1m-t[0m|[1m-f[0m] [[3mvalu[0m]
+           [4moptarg[0m      [3mname[0m [3mvnam[0m|- [[1m-t[0m|[1m-f[0m|[1m-m[0m] [[3mvalu[0m]
            [4mrename[0m      [[1m-f[0m|[1m-q[0m] [[1m-r[0m] [[1m--[0m] [3marg[0m...
            [4mremove[0m      [[1m-f[0m|[1m-q[0m] [[1m-r[0m] [[1m-d[0m] [[1m-o[0m] [[1m--[0m] [3marg[0m...
            [4msplitjoin[0m   [[1m-j[0m|[1m-s[0m [3mvnam[0m] [[1m-d[0m [3mdeli[0m]
@@ -121,15 +121,20 @@ Note: you can use 'less -R ...' to read this text
 ──────────────────────────────────────────────────────────────────────────────────────────────
            The [1mframework[0m imposes a simple source structure and control flow:
 
-[1mSource:    [0m(A1) Load the proxy                         # shared version
+[1mProxy:     [0mUsing a proxy to load mini-bash-lib or centauri-bash-lib
+
+           (A1) Load the proxy                         # shared version
            (A2) Script code
-           (A3) Execute 'main [1m"$@"[0m ; quit'
+           (A3) Execute 'main [1m"$@"[0m ; quit'             # invoke, run, exit
+
+[1mEmbeded:   [0mEmbedding mini-bash-lib in a script, using packed source
 
            (B1) Script code                            # embedded version
            (B2) Embedded library code
-           (B3) Execute 'main [1m"$@"[0m ; quit'
+           (B3) Execute 'main [1m"$@"[0m ; quit'             # invoke, run, exit
 
-[1mControl Flow:[0m
+[1mFramework: [0mControl flow: main - options - usage - run - quit
+
            (1) [4mmain[0m()                      # invoke framework
            (2)     [4moptions[0m()               # optional: command line parser
            (3) [4mrun[0m()                       # call by [[main()]]
@@ -137,23 +142,25 @@ Note: you can use 'less -R ...' to read this text
            (5) [4mquit()[0m                      # leave framework
            (6)     [4mquit_hook[0m               # optional: custom clean-ups
 
-[1mRemarks:   [0mProxy             Using a proxy to load mini-bash-lib or centauri-bash-lib
-           Embedding         Embedding mini-bash-lib in a script, packing to source
-           Framework         Application framwork: main - options - usage - run - quit
-           Error handling    Creating robust scripts: error - quit - trace - dryrun
-           error [1m-t[0m        # status test
+[1mErrors:    [0mCreating robust scripts: error - quit - trace - dryrun
+
+           dryrun          # test for --dryrun command line option
+
+           error [1m-t[0m        # status test, example: while error -t ; do ...
            error [1m-q[0m        # test and call quit -e
 
            quit [1m-e[0m         # 'terminated after error'
            quit [1m-t[0m         # 'terminated'
 
+           trace           # trace message if --trace cmd line option is set
+
 ──────────────────────────────────────────────────────────────────────────────────────────────
-[1mTopic - proxy -[0m [1mUsing the proxy to sharing the library and to support i10n[0m
+[1mTopic - proxy -[0m [1mUsing the proxy for sharing the library and to support I10n[0m
 ──────────────────────────────────────────────────────────────────────────────────────────────
 [1mPurpose:   [0mInstead of embedding the library source into each script, a [1mproxy[0m can be used to
            locate and load the library source in the file system tree. The [1mproxy[0m also enables
            coexistence with centauri-bash-lib and allows to load GNU [4mgettext[0m translations
-           (i10n).
+           (I10n).
 
 [1mCall:      [0mThe [1mproxy[0m file is [1m_mini_bash_lib[0m. It is located using [1mPATH[0m and gets sourced by
            bash:
@@ -171,7 +178,7 @@ Note: you can use 'less -R ...' to read this text
 [1mExample:   [0mSee: [1m/usr/share/doc/mini-bash-lib/Examples/shared[0m
 
 [1mUsage:     [0mThe [1mproxy[0m code must be in then same folder as the library itself. The best way to
-           using it is symlinking the [1mproxy[0m from [1m/usr/local/bin[0m to the installation folder.
+           using it is sym linking the [1mproxy[0m from [1m/usr/local/bin[0m to the installation folder.
            Obviously [1m/usr/local/bin[0m must be in your [1mPATH[0m:
 
            ┃ cd /usr/local/bin
@@ -207,7 +214,7 @@ Note: you can use 'less -R ...' to read this text
            sets the required bash variables to load the translations created by mini10.
 
 ──────────────────────────────────────────────────────────────────────────────────────────────
-[1mTopic - main -[0m [1mCallback: Invoking the framework, option parsing[0m
+[1mTopic - main -[0m [1mInvoking the framework, option parsing[0m
 ──────────────────────────────────────────────────────────────────────────────────────────────
 [1mcommand line:[0m
            The [1mmain[0m() function is the entry point for a script's code. It parses command line
@@ -217,12 +224,12 @@ Note: you can use 'less -R ...' to read this text
            The framework implements [1mmain[0m(), the [1mrun()[0m function must be implemented by the user
            script.
 
-[1moptions:   [0mThe framework implements a few options by default, see below. If a script
+[1mOptions:   [0mThe framework implements a few options by default, see below. If a script
            implements an [4moptions[0m() function, this gets called before the internal
            implementation. For each command line option the options function is called once,
            see [4moptarg()[0m. When all options were processed ... empty call ...
 
-[1mCall:      [0m[1mmain[0m [[3mopt[0m...] [---] [[3marg[0m...]
+[1mCall:      [0m[1mmain[0m [[3mopt[0m...] [[1m--[0m|---] [[3marg[0m...]
 
 [1mOptions:   [0m-[3mchar[0m             short option
            -[3mchar[0m[3mvalue[0m      short option with value (no separating space)
@@ -238,10 +245,10 @@ Note: you can use 'less -R ...' to read this text
 ──────────────────────────────────────────────────────────────────────────────────────────────
 [1mTopic - options -[0m [1mCallback: Command Line Option Parser[0m
 ──────────────────────────────────────────────────────────────────────────────────────────────
-[1mPurpose:   [0mHandle the parsing and validation of command line arguemnts
+[1mPurpose:   [0mHandle the parsing and validation of command line arguments
 
 [1mRemarks:   [0mThis function is called for each command line option with the option and the
-           optional option arguemt as parameters. After this the function gets called again
+           optional option argument as parameters. After this the function gets called again
            without parameters to signal the end of option processing.
 
            The framework will remove all parsed [1moptions[0m from the argument list that get passed
@@ -250,15 +257,29 @@ Note: you can use 'less -R ...' to read this text
            A typical implementation will use a [1m"case"[0m statement and call [4moptarg()[0m for each
            option. Any error will cause the framework not to call [4mrun[0m().
 
+[1mExample:   [0m┃ [1mCEN_OPT_BASE[0m=               # set via optarg
+           ┃ [1mCEN_OPT_DROP[0m=               # ...
+           ┃ 
+           ┃ [1moptions[0m() {
+           ┃     case [1m"$1"[0m in            # "$2" is opt. value or next option
+           ┃         [1m-B[0m|[1m--bas[0m*)
+           ┃             optarg  'base'       -   [1m-t[0m ;; # text: CEN_OPT_BASE=<value>
+           ┃         [1m-D[0m|[1m--dro[0m|[1m--drop[0m)
+           ┃             optarg  'drop'       -   [1m-f[0m ;; # flag: CEN_OPT_DROP=1
+           ┃         [1m-U[0m|[1m--upp[0m*)
+           ┃             optarg  'uppercase'  -   [1m-t[0m [1m"{2^^}"[0m ;;
+           ┃     esac
+           ┃ }
+
 [1mImportant: [0m[1mDO NOT[0m 'exit' or quit from inside this function
 
 ──────────────────────────────────────────────────────────────────────────────────────────────
 [1mTopic - quit_hook -[0m [1mCallback: Cleaning up before Termination[0m
 ──────────────────────────────────────────────────────────────────────────────────────────────
-[1mPurpose:   [0mAllows a script funtion to be called when terminating.
+[1mPurpose:   [0mAllows a script function to be called when terminating.
 
 [1mNotes:     [0mThis [1mCEN_HOOK_QUIT[0m implementation is centauri-bash-lib compatible but receives a
-           different set of arguments. In mini-bash-lib all [4mquit()[0m arguemnts are passed, which
+           different set of arguments. In mini-bash-lib all [4mquit()[0m arguments are passed, which
            is not the case for centauri-bash-lib.
 
            It is important to call the next entry of the hook chain from your hook function so
@@ -277,8 +298,8 @@ Note: you can use 'less -R ...' to read this text
            ┃ [1mCEN_HOOK_QUIT[0m='cleanup'         # quit hook function
 
            ┃ # call quit hook chain before exec
-           quit [1m-h[0m
-           system [1m-e[0m exec something        # will not return from exec
+           ┃ quit [1m-h[0m
+           ┃ system [1m-e[0m exec something        # will not return from exec
 
 [1mImportant: [0m[1mDO NOT[0m 'exit' or quit from inside this function
 
@@ -334,7 +355,7 @@ Note: you can use 'less -R ...' to read this text
 
 [1mArguments: [0m[3mdflt[0m          final part of prompt. Example: [1m" [OK]? "[0m
            [3mtext[0m          prompt message
-           [3mvnam[0m          name of a variable to receice input
+           [3mvnam[0m          name of a variable to receive input
            [3mwhat[0m  -       ask for free text input
                  +       ask for a password (no echo)
                  .       append ' [[3mdflt[0m]: ' to prompt text
@@ -505,16 +526,25 @@ Note: you can use 'less -R ...' to read this text
 ──────────────────────────────────────────────────────────────────────────────────────────────
 [1mFunction - optarg -[0m [1mOption setter for use in options() call-back[0m
 ──────────────────────────────────────────────────────────────────────────────────────────────
-[1mCall:      [0m(1) [1moptarg[0m [3mname[0m [3mvnam[0m|- [1m-f[0m
+[1mCall:      [0m(1) [1moptarg[0m [3mname[0m [3mvnam[0m|- [1m-f[0m [[3mvalu[0m]
            (2) [1moptarg[0m [3mname[0m [3mvnam[0m|- [1m-t[0m [[3mvalu[0m]
+           (3) [1moptarg[0m [3mtest[0m - [1m-m[0m [3minfo[0m
 
 [1mOptions:   [0m[1m-f[0m      flag option, set [3mvnam[0m to [1m"1"[0m
+           [1m-m[0m      report conflicting options
            [1m-t[0m      text option, set [3mvnam[0m to option argument or [3mvalu[0m
 
 [1mArguments: [0m[3mname[0m  option long name
+           [3mtest[0m  report conflict if not empty or 1
+           [3minfo[0m  appended to 'Conflicting options:'
+           [3mvalue[0m  optionally override to option value
            [3mvnam[0m  name of a variable to be set. If [1m"-"[0m the name is generated
-                 from name like: [1mCEN_OPT_[0m[3mname[0m
-           [3mvalu[0m  default used when the option argument is [1m"-"[0m
+                 from name like: [1mCEN_OPT_[0m[3mname[0m (in uppercase)
+
+[1mExamples:  [0m┃ [1moptarg[0m 'example' - [1m-f[0m ;;                        # simple flag
+           ┃ [1moptarg[0m 'count' - [1m-f[0m $(([1mCEN_OPT_COUNT[0m + 1)) ;;   # override flag value
+           ┃ [1moptarg[0m 'text'  - [1m-t[0m [1m"${2^^}"[0m ;;                 # convert to uppercase
+           ┃ [1moptarg[0m [1m"$CEN_OPT_NO$CEN_OPT_YES"[0m - [1m-m[0m [1m"Say yes or no!"[0m
 
 [1mReturn:    [0m[1mtrue[0m on success
 
@@ -564,7 +594,7 @@ Note: you can use 'less -R ...' to read this text
 
 [1mArguments: [0m[3mdeli[0m  list of single char field delimiters (processed via printf)
            [3mvarr[0m  name of array variable for split result
-           [3mvstr[0m  name of string variable for joiin result
+           [3mvstr[0m  name of string variable for join result
            [3mtext[0m  any input data
 
 [1mReturn:    [0m[1mtrue[0m on success
@@ -607,17 +637,18 @@ Note: you can use 'less -R ...' to read this text
            [1m-z[0m  capture [1mstderr[0m only. do not interfere with [1mstdout[0m
 
 [1mArguments: [0m[3mtool[0m  external or builtin command to use
-           [3marg[0m   arguemnts for [3mtool[0m
+           [3marg[0m   arguments for [3mtool[0m
            [3mdeli[0m  word/line delimiter, C-style syntax
            [3mvnam[0m  name of a string or array variable
 
 [1mSplitting: [0mWith option [1m-a[0m the [3mtool[0m output the output lines are returned as an array. By
            default empty lines are ignored, uses [1m-d[0m '[1m--[0m' to return empty lines too.
 
-           [1mcurrently option -d is not implemented, except -d '--'.[0m
+           Option [1m-d[0m in mini-bash-lib implies '\n', e.g. it is not possible to keep new-line
+           chars in returned data.
 
 [1mNotes:     [0mmini-bash-lib does not explicitly support bash loadables. So [1msystem[0m makes no
-           difference beween builtin are external commands.
+           difference between builtin are external commands.
 
            [1msystem[0m cannot by used recursively, so better don't call functions.
 

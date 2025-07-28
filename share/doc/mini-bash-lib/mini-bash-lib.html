@@ -99,7 +99,7 @@
 <a href="#fatal">fatal</a>       [<b>-m</b>|<b>-p</b>] [<b>--</b>] <i>text</i>...
 <a href="#folder">folder</a>      [<b>-c</b>] [<b>-m</b>] [<b>-p</b>] [<b>-f</b>|<b>-q</b>] [<b>--</b>] <i>path</i>
 <a href="#message">message</a>     [<b>-a</b>|<b>-i</b>] [<b>-c</b> <i>labl</i>] [<b>-m</b>|<b>-p</b>] [<b>--</b>] <i>text</i>...
-<a href="#optarg">optarg</a>      <i>name</i> <i>vnam</i>|- [<b>-t</b>|<b>-f</b>] [<i>valu</i>]
+<a href="#optarg">optarg</a>      <i>name</i> <i>vnam</i>|- [<b>-t</b>|<b>-f</b>|<b>-m</b>] [<i>valu</i>]
 <a href="#rename">rename</a>      [<b>-f</b>|<b>-q</b>] [<b>-r</b>] [<b>--</b>] <i>arg</i>...
 <a href="#remove">remove</a>      [<b>-f</b>|<b>-q</b>] [<b>-r</b>] [<b>-d</b>] [<b>-o</b>] [<b>--</b>] <i>arg</i>...
 <a href="#splitjoin">splitjoin</a>   [<b>-j</b>|<b>-s</b> <i>vnam</i>] [<b>-d</b> <i>deli</i>]
@@ -182,20 +182,34 @@
 <div class='def-block'>The <b>framework</b> imposes a simple source structure and control flow:</div>
 </div>
 <div class='def-row'>
-<div class='def-label'>Source:</div>
+<div class='def-label'>Proxy:</div>
+<div class='def-text'>Using a proxy to load mini-bash-lib or centauri-bash-lib</div>
+</div>
+<div class='def-break'></div>
+<div class='def-row'>
+<div class='def-empty'></div>
 <div class='def-text'>(A1) Load the proxy                         # shared version
 (A2) Script code
-(A3) Execute &apos;main <b>&quot;$@&quot;</b> ; quit&apos;</div>
+(A3) Execute &apos;main <b>&quot;$@&quot;</b> ; quit&apos;             # invoke, run, exit</div>
+</div>
+<div class='def-row'>
+<div class='def-label'>Embeded:</div>
+<div class='def-text'>Embedding mini-bash-lib in a script, using packed source</div>
 </div>
 <div class='def-break'></div>
 <div class='def-row'>
 <div class='def-empty'></div>
 <div class='def-text'>(B1) Script code                            # embedded version
 (B2) Embedded library code
-(B3) Execute &apos;main <b>&quot;$@&quot;</b> ; quit&apos;</div>
+(B3) Execute &apos;main <b>&quot;$@&quot;</b> ; quit&apos;             # invoke, run, exit</div>
 </div>
 <div class='def-row'>
-<div class='def-label'>Control Flow:</div>
+<div class='def-label'>Framework:</div>
+<div class='def-text'>Control flow: main - options - usage - run - quit</div>
+</div>
+<div class='def-break'></div>
+<div class='def-row'>
+<div class='def-empty'></div>
 <div class='def-text'>(1) <a href="#main">main</a>()                      # invoke framework
 (2)     <a href="#options">options</a>()               # optional: command line parser
 (3) <a href="#run">run</a>()                       # call by [[main()]]
@@ -204,21 +218,38 @@
 (6)     <a href="#quit_hook">quit_hook</a>               # optional: custom clean-ups</div>
 </div>
 <div class='def-row'>
-<div class='def-label'>Remarks:</div>
-<div class='def-block'>Proxy             Using a proxy to load mini-bash-lib or centauri-bash-lib Embedding         Embedding mini-bash-lib in a script, packing to source Framework         Application framwork: main - options - usage - run - quit Error handling    Creating robust scripts: error - quit - trace - dryrun error <b>-t</b>        # status test error <b>-q</b>        # test and call quit -e</div>
+<div class='def-label'>Errors:</div>
+<div class='def-text'>Creating robust scripts: error - quit - trace - dryrun</div>
 </div>
 <div class='def-break'></div>
 <div class='def-row'>
 <div class='def-empty'></div>
-<div class='def-block'>quit <b>-e</b>         # &apos;terminated after error&apos; quit <b>-t</b>         # &apos;terminated&apos;</div>
+<div class='def-text'>dryrun          # test for --dryrun command line option</div>
+</div>
+<div class='def-break'></div>
+<div class='def-row'>
+<div class='def-empty'></div>
+<div class='def-text'>error <b>-t</b>        # status test, example: while error -t ; do ...
+error <b>-q</b>        # test and call quit -e</div>
+</div>
+<div class='def-break'></div>
+<div class='def-row'>
+<div class='def-empty'></div>
+<div class='def-text'>quit <b>-e</b>         # &apos;terminated after error&apos;
+quit <b>-t</b>         # &apos;terminated&apos;</div>
+</div>
+<div class='def-break'></div>
+<div class='def-row'>
+<div class='def-empty'></div>
+<div class='def-text'>trace           # trace message if --trace cmd line option is set</div>
 </div>
 </section>
 <section id='section-5'>
 <div id='proxy' class='item-topic'>
-<span>Topic</span><span> - </span><span>proxy</span><span> - </span><span>Using the proxy to sharing the library and to support i10n</span></div>
+<span>Topic</span><span> - </span><span>proxy</span><span> - </span><span>Using the proxy for sharing the library and to support I10n</span></div>
 <div class='def-row'>
 <div class='def-label'>Purpose:</div>
-<div class='def-block'>Instead of embedding the library source into each script, a <b>proxy</b> can be used to locate and load the library source in the file system tree. The <b>proxy</b> also enables coexistence with centauri-bash-lib and allows to load GNU <a href="#gettext">gettext</a> translations (i10n).</div>
+<div class='def-block'>Instead of embedding the library source into each script, a <b>proxy</b> can be used to locate and load the library source in the file system tree. The <b>proxy</b> also enables coexistence with centauri-bash-lib and allows to load GNU <a href="#gettext">gettext</a> translations (I10n).</div>
 </div>
 <div class='def-row'>
 <div class='def-label'>Call:</div>
@@ -247,7 +278,7 @@
 </div>
 <div class='def-row'>
 <div class='def-label'>Usage:</div>
-<div class='def-block'>The <b>proxy</b> code must be in then same folder as the library itself. The best way to using it is symlinking the <b>proxy</b> from <b>/usr/local/bin</b> to the installation folder. Obviously <b>/usr/local/bin</b> must be in your <b>PATH</b>:</div>
+<div class='def-block'>The <b>proxy</b> code must be in then same folder as the library itself. The best way to using it is sym linking the <b>proxy</b> from <b>/usr/local/bin</b> to the installation folder. Obviously <b>/usr/local/bin</b> must be in your <b>PATH</b>:</div>
 </div>
 <div class='def-break'></div>
 <div class='def-row'>
@@ -305,7 +336,7 @@ ln <b>-s</b> /usr/share/src/mini-bash-lib/_mini_bash_lib .</pre></div>
 </section>
 <section id='section-7'>
 <div id='main' class='item-topic'>
-<span>Topic</span><span> - </span><span>main</span><span> - </span><span>Callback: Invoking the framework, option parsing</span></div>
+<span>Topic</span><span> - </span><span>main</span><span> - </span><span>Invoking the framework, option parsing</span></div>
 <div class='def-row'>
 <div class='def-label'>command line:</div>
 <div class='def-block'>The <b>main</b>() function is the entry point for a script&apos;s code. It parses command line options (not to be confused with function options) and passes the remaining call arguments to <a href="#run">run</a>().</div>
@@ -316,12 +347,12 @@ ln <b>-s</b> /usr/share/src/mini-bash-lib/_mini_bash_lib .</pre></div>
 <div class='def-block'>The framework implements <b>main</b>(), the <b>run()</b> function must be implemented by the user script.</div>
 </div>
 <div class='def-row'>
-<div class='def-label'>options:</div>
+<div class='def-label'>Options:</div>
 <div class='def-block'>The framework implements a few options by default, see below. If a script implements an <a href="#options">options</a>() function, this gets called before the internal implementation. For each command line option the options function is called once, see <a href="#optarg">optarg()</a>. When all options were processed ... empty call ...</div>
 </div>
 <div class='def-row'>
 <div class='def-label'>Call:</div>
-<div class='def-text'><b>main</b> [<i>opt</i>...] [---] [<i>arg</i>...]</div>
+<div class='def-text'><b>main</b> [<i>opt</i>...] [<b>--</b>|---] [<i>arg</i>...]</div>
 </div>
 <div class='def-row'>
 <div class='def-label'>Options:</div>
@@ -346,11 +377,11 @@ ln <b>-s</b> /usr/share/src/mini-bash-lib/_mini_bash_lib .</pre></div>
 <span>Topic</span><span> - </span><span>options</span><span> - </span><span>Callback: Command Line Option Parser</span></div>
 <div class='def-row'>
 <div class='def-label'>Purpose:</div>
-<div class='def-block'>Handle the parsing and validation of command line arguemnts</div>
+<div class='def-block'>Handle the parsing and validation of command line arguments</div>
 </div>
 <div class='def-row'>
 <div class='def-label'>Remarks:</div>
-<div class='def-block'>This function is called for each command line option with the option and the optional option arguemt as parameters. After this the function gets called again without parameters to signal the end of option processing.</div>
+<div class='def-block'>This function is called for each command line option with the option and the optional option argument as parameters. After this the function gets called again without parameters to signal the end of option processing.</div>
 </div>
 <div class='def-break'></div>
 <div class='def-row'>
@@ -363,6 +394,22 @@ ln <b>-s</b> /usr/share/src/mini-bash-lib/_mini_bash_lib .</pre></div>
 <div class='def-block'>A typical implementation will use a <b>&quot;case&quot;</b> statement and call <a href="#optarg">optarg()</a> for each option. Any error will cause the framework not to call <a href="#run">run</a>().</div>
 </div>
 <div class='def-row'>
+<div class='def-label'>Example:</div>
+<div class='def-text'><pre><b>CEN_OPT_BASE</b>=               # set via optarg
+<b>CEN_OPT_DROP</b>=               # ...
+
+<b>options</b>() {
+    case <b>&quot;$1&quot;</b> in            # &quot;$2&quot; is opt. value or next option
+        <b>-B</b>|<b>--bas</b>*)
+            optarg  &apos;base&apos;       -   <b>-t</b> ;; # text: CEN_OPT_BASE=&lt;value&gt;
+        <b>-D</b>|<b>--dro</b>|<b>--drop</b>)
+            optarg  &apos;drop&apos;       -   <b>-f</b> ;; # flag: CEN_OPT_DROP=1
+        <b>-U</b>|<b>--upp</b>*)
+            optarg  &apos;uppercase&apos;  -   <b>-t</b> <b>&quot;{2^^}&quot;</b> ;;
+    esac
+}</pre></div>
+</div>
+<div class='def-row'>
 <div class='def-label'>Important:</div>
 <div class='def-block'><b>DO NOT</b> &apos;exit&apos; or quit from inside this function</div>
 </div>
@@ -372,11 +419,11 @@ ln <b>-s</b> /usr/share/src/mini-bash-lib/_mini_bash_lib .</pre></div>
 <span>Topic</span><span> - </span><span>quit_hook</span><span> - </span><span>Callback: Cleaning up before Termination</span></div>
 <div class='def-row'>
 <div class='def-label'>Purpose:</div>
-<div class='def-block'>Allows a script funtion to be called when terminating.</div>
+<div class='def-block'>Allows a script function to be called when terminating.</div>
 </div>
 <div class='def-row'>
 <div class='def-label'>Notes:</div>
-<div class='def-block'>This <b>CEN_HOOK_QUIT</b> implementation is centauri-bash-lib compatible but receives a different set of arguments. In mini-bash-lib all <a href="#quit">quit()</a> arguemnts are passed, which is not the case for centauri-bash-lib.</div>
+<div class='def-block'>This <b>CEN_HOOK_QUIT</b> implementation is centauri-bash-lib compatible but receives a different set of arguments. In mini-bash-lib all <a href="#quit">quit()</a> arguments are passed, which is not the case for centauri-bash-lib.</div>
 </div>
 <div class='def-break'></div>
 <div class='def-row'>
@@ -404,7 +451,7 @@ cleanup() {
 <div class='def-empty'></div>
 <div class='def-text'><pre># call quit hook chain before exec
 quit <b>-h</b>
-system <b>-e</b> exec something        # will not return from exec</div>
+system <b>-e</b> exec something        # will not return from exec</pre></div>
 </div>
 <div class='def-row'>
 <div class='def-label'>Important:</div>
@@ -485,7 +532,7 @@ Note:   See implementations in tools of the mini-bash-lib source.
 <div class='def-label'>Arguments:</div>
 <div class='def-text'><i>dflt</i>          final part of prompt. Example: <b>&quot; [OK]? &quot;</b>
 <i>text</i>          prompt message
-<i>vnam</i>          name of a variable to receice input
+<i>vnam</i>          name of a variable to receive input
 <i>what</i>  -       ask for free text input
       +       ask for a password (no echo)
       .       append &apos; [<i>dflt</i>]: &apos; to prompt text
@@ -757,20 +804,31 @@ done</pre></div>
 <span>Function</span><span> - </span><span>optarg</span><span> - </span><span>Option setter for use in options() call-back</span></div>
 <div class='def-row'>
 <div class='def-label'>Call:</div>
-<div class='def-text'>(1) <b>optarg</b> <i>name</i> <i>vnam</i>|- <b>-f</b>
-(2) <b>optarg</b> <i>name</i> <i>vnam</i>|- <b>-t</b> [<i>valu</i>]</div>
+<div class='def-text'>(1) <b>optarg</b> <i>name</i> <i>vnam</i>|- <b>-f</b> [<i>valu</i>]
+(2) <b>optarg</b> <i>name</i> <i>vnam</i>|- <b>-t</b> [<i>valu</i>]
+(3) <b>optarg</b> <i>test</i> - <b>-m</b> <i>info</i></div>
 </div>
 <div class='def-row'>
 <div class='def-label'>Options:</div>
 <div class='def-text'><b>-f</b>      flag option, set <i>vnam</i> to <b>&quot;1&quot;</b>
+<b>-m</b>      report conflicting options
 <b>-t</b>      text option, set <i>vnam</i> to option argument or <i>valu</i></div>
 </div>
 <div class='def-row'>
 <div class='def-label'>Arguments:</div>
 <div class='def-text'><i>name</i>  option long name
+<i>test</i>  report conflict if not empty or 1
+<i>info</i>  appended to &apos;Conflicting options:&apos;
+<i>value</i>  optionally override to option value
 <i>vnam</i>  name of a variable to be set. If <b>&quot;-&quot;</b> the name is generated
-      from name like: <b>CEN_OPT_</b><i>name</i>
-<i>valu</i>  default used when the option argument is <b>&quot;-&quot;</b></div>
+      from name like: <b>CEN_OPT_</b><i>name</i> (in uppercase)</div>
+</div>
+<div class='def-row'>
+<div class='def-label'>Examples:</div>
+<div class='def-text'><pre><b>optarg</b> &apos;example&apos; - <b>-f</b> ;;                        # simple flag
+<b>optarg</b> &apos;count&apos; - <b>-f</b> $((<b>CEN_OPT_COUNT</b> + 1)) ;;   # override flag value
+<b>optarg</b> &apos;text&apos;  - <b>-t</b> <b>&quot;${2^^}&quot;</b> ;;                 # convert to uppercase
+<b>optarg</b> <b>&quot;$CEN_OPT_NO$CEN_OPT_YES&quot;</b> - <b>-m</b> <b>&quot;Say yes or no!&quot;</b></pre></div>
 </div>
 <div class='def-row'>
 <div class='def-label'>Return:</div>
@@ -849,7 +907,7 @@ done</pre></div>
 <div class='def-label'>Arguments:</div>
 <div class='def-text'><i>deli</i>  list of single char field delimiters (processed via printf)
 <i>varr</i>  name of array variable for split result
-<i>vstr</i>  name of string variable for joiin result
+<i>vstr</i>  name of string variable for join result
 <i>text</i>  any input data</div>
 </div>
 <div class='def-row'>
@@ -911,7 +969,7 @@ done</pre></div>
 <div class='def-row'>
 <div class='def-label'>Arguments:</div>
 <div class='def-text'><i>tool</i>  external or builtin command to use
-<i>arg</i>   arguemnts for <i>tool</i>
+<i>arg</i>   arguments for <i>tool</i>
 <i>deli</i>  word/line delimiter, C-style syntax
 <i>vnam</i>  name of a string or array variable</div>
 </div>
@@ -922,11 +980,11 @@ done</pre></div>
 <div class='def-break'></div>
 <div class='def-row'>
 <div class='def-empty'></div>
-<div class='def-block'><b>currently option -d is not implemented, except -d &apos;--&apos;.</b></div>
+<div class='def-block'>Option <b>-d</b> in mini-bash-lib implies &apos;\n&apos;, e.g. it is not possible to keep new-line chars in returned data.</div>
 </div>
 <div class='def-row'>
 <div class='def-label'>Notes:</div>
-<div class='def-block'>mini-bash-lib does not explicitly support bash loadables. So <b>system</b> makes no difference beween builtin are external commands.</div>
+<div class='def-block'>mini-bash-lib does not explicitly support bash loadables. So <b>system</b> makes no difference between builtin are external commands.</div>
 </div>
 <div class='def-break'></div>
 <div class='def-row'>

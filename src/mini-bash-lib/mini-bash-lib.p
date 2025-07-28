@@ -82,7 +82,7 @@ done
 [ -z "$_ofmt" ]&&_text="$*"||printf -v _text "$@"
 if [ -z "$_what" ];then
 [ "$_info" = - ]&&_info=': '
-read -p -r "$_idnt $_text$_info" _repl;CEN_IDNT=1
+read -rp "$_idnt $_text$_info" _repl;CEN_IDNT=1
 [ -z "$_repl" ]&&_repl="$_defn"
 [ -z "$_oupc" ]&&_repl="${_repl,,}"
 [ -n "$_vnam" ]&&printf -v "$_vnam" '%s' "$_repl"
@@ -351,7 +351,7 @@ CEN_ARGS=2;CEN_ARGOPT="$_aarr"
 else
 CEN_ARGS=1
 fi
-[ "$CEN_ARGOPT" = - ]&&CEN_ARGOPT="${4:--}";printf -v "$_name" '%s' "$CEN_ARGOPT"
+[ $# -gt 3 ]&&CEN_ARGOPT="$4";printf -v "$_name" '%s' "$CEN_ARGOPT"
 esac
 }
 quit(){
