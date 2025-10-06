@@ -98,7 +98,8 @@ run_edit() {
         [ -z "$skip" ] && outp+=("$line")
         case "$line" in
         '### mini-bash-lib source ###'*)
-            CEN_OPT_EMPTY=1 ; run_pack "$DAT_FINP" outp
+            CEN_OPT_UGLIFY= ; CEN_OPT_EMPTY=1 ; CEN_OPT_TRIM= 
+            run_pack "$DAT_FINP" outp
             skip=1 ; tag1=2 ;;
         '### mini-bash-lib packed ###'*)
             CEN_OPT_UGLIFY=1 ; CEN_OPT_EMPTY=1 ; CEN_OPT_TRIM=1
